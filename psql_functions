@@ -1,0 +1,38 @@
+CREATE OR REPLACE FUNCTION package_id(atom varchar, OUT id integer) AS $$
+DECLARE 
+	c varchar;
+	p varchar;
+BEGIN
+	c := category_name(atom);
+	p := package_name(atom);
+	id := package_id(c, p);	
+END;
+$$ language plpgsql;
+
+CREATE OR REPLACE FUNCTION category_id(atom varchar, OUT i integer) AS $$
+	DECLARE c varchar;
+BEGIN
+	c := category_name(atom);
+	i := id FROM category WHERE name = c;
+END;
+$$ language plpgsql;
+
+CREATE OR REPLACE FUNCTION category_name (str varchar, OUT v varchar) AS $$ BEGIN IF POSITION('/' IN str) > 0 THEN
+v := regexp_replace(str, E'^(!{1,2})?(>|<)?(~|=)?', '');
+v := regexp_replace(v, E'/.*', '');
+ELSE
+v := str;
+END IF;
+END;
+$$ language plpgsql;
+
+CREATE OR REPLACE FUNCTION package_name(str varchar, OUT package_name varchar) AS $$
+BEGIN
+IF POSITION('/' IN str) > 0 THEN
+package_name := regexp_replace(str, E'^(!{1,2})?(>|<)?(~|=)?.*/', '');
+ELSE
+package_name := str;
+END IF;
+package_name := regexp_replace(package_name, E'-\\d+((\.\\d+)+)?([a-z])?((_(alpha|beta|pre|rc|p)\\d*)+)?(-r\\d+)?(:.+)?([.+])?$', '');
+END;
+$$ language plpgsql;
