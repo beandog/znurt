@@ -84,7 +84,7 @@
 			$this->atom = trim($str);
 			$this->arr_suffix = array('alpha', 'beta', 'rc', 'pre', 'p');
 			$this->portage = $tree->getTree();
-			$this->cache = $this->portage.'/metadata/cache';
+			$this->cache = $this->portage.'/metadata/md5-cache';
 			
 			$this->has_version = $this->hasVersion();
 			
