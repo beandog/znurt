@@ -96,7 +96,7 @@
 		// Need to check the packages themselves, because something may have
 		// been deleted.
 		$portage = $tree->getTree();
-		$cache = $tree->getTree()."/metadata/cache/";
+		$cache = $tree->getTree()."/metadata/md5-cache/";
 		
 		$tmp = tempnam('/tmp', 'znurt');
 		touch($tmp, $min);
@@ -111,7 +111,7 @@
 		}
 		
 		foreach($arr as $dir) {
-			$atom = str_replace($tree->getTree()."/metadata/cache/", "", $dir);
+			$atom = str_replace($tree->getTree()."/metadata/md5-cache/", "", $dir);
 			$e = new PortageEbuild($atom);
 			
 			$arr_import[$e->category][] = $e->pn;
