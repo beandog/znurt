@@ -99,6 +99,7 @@
 			if(file_exists($this->filename_cache))
 				$this->cache_mtime = filemtime($this->filename_cache);
 		
+			// Old cache located at /usr/portage/metadata/cache
 			$this->arr_metadata_keys = array('depend', 'rdepend', 'slot', 'src_uri', 'restrict', 'homepage', 'license', 'description', 'keywords', 'inherited', 'iuse', 'cdepend', 'pdepend', 'provide', 'eapi', 'properties', 'defined_phases');
 			
 		}
@@ -198,28 +199,6 @@
 		/**
 		 * Gather information about the ebuild
 		 * from the metadata cache
-		 *
-		 * Line item reference:
-		 * 
-		 * 0. DEPEND
-		 * 1. RDEPEND
-		 * 2. SLOT
-		 * 3. SRC_URI
-		 * 4. RESTRICT
-		 * 5. HOMEPAGE
-		 * 6. LICENSE
-		 * 7. DESCRIPTION
-		 * 8. KEYWORDS
-		 * 9. INHERITED (eclasses)
-		 * 10. IUSE
-		 * 11. CDEPEND (always empty)
-		 * 12. PDEPEND
-		 * 13. PROVIDE
-		 * 14. EAPI
-		 * 15. PROPERTIES
-		 * 16. DEFINED_PHASES (functions called)
-		 * 17. - 21. unused
-		 *
 		 */
 		function metadata() {
 		
@@ -233,8 +212,27 @@
 			
 			// Kill off the empty lines
 			$arr = array_slice($file, 0, 17, true);
-			
-			$arr = array_combine($this->arr_metadata_keys, $arr);
+
+			$arr_metadata = array();
+
+			foreach($this->arr_metadata_keys as $key => $value) {
+				if(!($value == 'eclasses' || $value == 'md5'))
+					$value = strtoupper($value);
+				$pattern = "/^_?".$value."_?=/i";
+				$arr_grep = preg_grep($pattern, $arr);
+				if(count($arr_grep)) {
+					$str = current($arr_grep);
+					$arr_metadata[$key] = $str;
+				} else {
+					$arr_metadata[$key] = "$value=";
+				}
+			}
+
+			if(count($this->arr_metadata_keys) == count($arr_metadata))
+				$arr = array_combine($this->arr_metadata_keys, $arr_metadata);
+			// FIXME log an error if no metadata
+			else
+				$arr = array();
 			
 			return $arr;
 		
