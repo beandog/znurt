@@ -1,9 +1,9 @@
 <?
 
-// 	$verbose = true;
+ 	//$verbose = true;
 // 	$qa = true;	
 
-// 	$debug = true;
+ 	//$debug = true;
 
 	/**
 	 * It may seem a little odd, and to break normalization, to have a query to set the description on the package
@@ -23,11 +23,14 @@
 	require_once 'class.portage.ebuild.php';
 	
 	// Find all the ebuilds that are missing ebuild arch
-	$sql = "SELECT * FROM missing_metadata;";
+	$sql = "SELECT * FROM missing_metadata ORDER BY category_name, package_name, pf;";
 	$arr = $db->getAll($sql);
 	
 	if($verbose)
 		shell::msg(number_format(count($arr))." ebuilds to check");
+	
+	$total = count($arr);
+	$count = 0;
 	
 	foreach($arr as $row) {
 		extract($row);
@@ -35,7 +38,7 @@
 		$e = new PortageEbuild("$category_name/$pf");
 		
 		if($debug)
-			shell::msg("[$category_name/".$e->pn."]");
+			shell::msg("$category_name/$e ($count/$total)");
 			
 		$arr_metadata = $e->metadata();
 		
@@ -57,6 +60,8 @@
 			if($verbose || $qa)
 				shell::msg("[QA] No metadata: $category_name/".$e->pf);
 		}
+
+		$count++;
 		
 	}
 	
@@ -67,10 +72,14 @@
 		if($verbose)
 			shell::msg("Setting the new package descriptions for $count packages");
 		
-		// Weird bug slipped in
-		$sql = "UPDATE package SET description = package_description(id) WHERE id IN (SELECT p.id FROM package p INNER JOIN package_recent pr ON pr.package = p.id WHERE (p.status = 1 AND p.portage_mtime = pr.max_ebuild_mtime) OR p.description = '');";
-		$db->query($sql);
-			
+		$sql = "SELECT p.id FROM package p INNER JOIN package_recent pr ON pr.package = p.id WHERE (p.status = 1 AND p.portage_mtime = pr.max_ebuild_mtime) OR p.description = '';";
+		$arr = $db->getCol($sql);
+		foreach($arr as $package_id) {
+			$sql = "UPDATE package SET description = package_description(id) WHERE id = $package_id;";
+			$db->query($sql);
+		}
+		// $sql = "UPDATE package SET description = package_description(id) WHERE id IN (SELECT p.id FROM package p INNER JOIN package_recent pr ON pr.package = p.id WHERE (p.status = 1 AND p.portage_mtime = pr.max_ebuild_mtime) OR p.description = '');";
+		// $db->query($sql);
 	}
 	
 ?>

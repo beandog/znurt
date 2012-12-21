@@ -99,7 +99,6 @@
 			if(file_exists($this->filename_cache))
 				$this->cache_mtime = filemtime($this->filename_cache);
 		
-			// Old cache located at /usr/portage/metadata/cache
 			$this->arr_metadata_keys = array('depend', 'rdepend', 'slot', 'src_uri', 'restrict', 'homepage', 'license', 'description', 'keywords', 'inherited', 'iuse', 'cdepend', 'pdepend', 'provide', 'eapi', 'properties', 'defined_phases');
 			
 		}
