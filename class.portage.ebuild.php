@@ -226,9 +226,13 @@
 				$arr_grep = preg_grep($pattern, $arr);
 				if(count($arr_grep)) {
 					$str = current($arr_grep);
+					
+					$arr_slice = array_slice(explode('=', $str), 1);
+					$str = implode('=', $arr_slice);
+
 					$arr_metadata[$key] = $str;
 				} else {
-					$arr_metadata[$key] = "$value=";
+					$arr_metadata[$key] = '';
 				}
 			}
 
