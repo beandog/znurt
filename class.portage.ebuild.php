@@ -195,6 +195,10 @@
 		
 			return $this->$var;
 		}
+
+		public function __toString() {
+			return $this->pf;
+		}
 		
 		/**
 		 * Gather information about the ebuild
