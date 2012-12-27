@@ -9,7 +9,7 @@
 	require_once 'class.portage.category.php';
 	require_once 'class.portage.package.php';
 	require_once 'class.portage.ebuild.php';
-	
+
 	// Get the arches
 	$arr_licenses = $tree->getLicenses();
 	
@@ -17,14 +17,20 @@
 	$sql = "SELECT ebuild, metadata FROM missing_license;";
 	$arr_missing_license = $db->getAssoc($sql);
 	
-	if($verbose)
-		shell::msg(count($arr)." ebuilds to check");
+	shell::msg(count($arr_missing_license)." ebuilds to check");
 		
 	// Get the licenses from the database
 	$db_licenses = $db->getAssoc("SELECT name, id FROM license;");
 	
 	if(count($arr_missing_license)) {
+	
+		$count = count($arr_missing_license);
+		$x = 1;
+
 		foreach($arr_missing_license as $ebuild => $str) {
+
+			shell::msg("$x/$count");
+			$x++;
 			
 			if(!empty($str)) {
 				$arr = arrLicenses($str, $arr_licenses);
