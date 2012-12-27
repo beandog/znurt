@@ -10,25 +10,32 @@
 	require_once 'class.portage.package.php';
 	require_once 'class.portage.ebuild.php';
 	
-// 	$verbose = true;
+ 	$verbose = true;
 // 	$qa = true;	
 	
 	// Get the arches
 	$arr_arches = $tree->getArches();
 	
 	// Find all the ebuilds that are missing ebuild arch
-	$sql = "SELECT ebuild, metadata FROM missing_arch;";
+	$sql = "SELECT ebuild, metadata FROM missing_arch ORDER BY ebuild;";
 	$arr_missing_arch = $db->getAssoc($sql);
 	
 	if($verbose)
 		shell::msg(count($arr_missing_arch)." ebuilds to check");
 	
 	// Get the arches from the database
-	$db_arches = $db->getAssoc("SELECT name, id FROM arch;");
+	$db_arches = $db->getAssoc("SELECT name, id FROM arch ORDER BY arch;");
 	
 	//FIXME rewrite this entire thing in SQL
-	if(count($arr)) {
+	if(count($arr_missing_arch)) {
+
+		$x = 1;
+		$count = count($arr_missing_arch);
+
 		foreach($arr_missing_arch as $ebuild => $keywords) {
+
+			shell::msg("ebuild arch: $ebuild ($x/$count)");
+			$x++;
 			
 			if(!empty($keywords))
 				$arr = arrKeywords($keywords, $arr_arches);
