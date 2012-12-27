@@ -112,6 +112,8 @@
 	$table = 'package';
 	
 	foreach($arr_categories as $category_id => $category_name) {
+
+		echo "packages import: $category_name\n";
 	
 		$c = new PortageCategory($category_name);
 		$arr_packages = $c->getPackages();

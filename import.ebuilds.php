@@ -38,7 +38,7 @@
 	  *
 	  */
 
-//    	$verbose = true;
+    	$verbose = true;
 //   	$debug = false;
 //   	$all = false;
 	
