@@ -1,9 +1,9 @@
 <?
 
- 	//$verbose = true;
+ 	$verbose = true;
 // 	$qa = true;	
 
- 	//$debug = true;
+ 	// $debug = true;
 
 	/**
 	 * It may seem a little odd, and to break normalization, to have a query to set the description on the package
@@ -37,8 +37,7 @@
 		
 		$e = new PortageEbuild("$category_name/$pf");
 		
-		if($debug)
-			shell::msg("$category_name/$e ($count/$total)");
+		shell::msg("$category_name/$e ($count/$total)");
 			
 		$arr_metadata = $e->metadata();
 		
@@ -68,6 +67,7 @@
 	// Set the new package descriptions
 	$sql = "SELECT COUNT(1) FROM package WHERE status = 1 OR description = '';";
 	$count = $db->getOne($sql);
+	$total = 1;
 	if($count) {
 		if($verbose)
 			shell::msg("Setting the new package descriptions for $count packages");
@@ -75,6 +75,11 @@
 		$sql = "SELECT p.id FROM package p INNER JOIN package_recent pr ON pr.package = p.id WHERE (p.status = 1 AND p.portage_mtime = pr.max_ebuild_mtime) OR p.description = '';";
 		$arr = $db->getCol($sql);
 		foreach($arr as $package_id) {
+
+			if($verbose)
+				echo "$total/$count\n";
+			$total++;
+
 			$sql = "UPDATE package SET description = package_description(id) WHERE id = $package_id;";
 			$db->query($sql);
 		}
