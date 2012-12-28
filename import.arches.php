@@ -43,5 +43,8 @@
 			}
 		}
 	}
-	
+
+	// Cleanup
+	$arr_import_diff = null;
+	$arr_tree_arches = null;
 ?>
