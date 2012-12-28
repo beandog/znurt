@@ -10,23 +10,30 @@
 
 	// Reset sequence if table is empty
 	$sql = "SELECT COUNT(1) FROM license;";
-	$count = $db->getOne($sql);
-	if($count == 0) {
+	$sth = $dbh->query($sql);
+	$num_db_licenses = $sth->fetchColumn();
+	if($num_db_licenses === 0) {
 		$sql = "ALTER SEQUENCE license_id_seq RESTART WITH 1;";
-		$db->query($sql);
+		$dbh->exec($sql);
 	}
 	
 	if(count($arr_diff['delete'])) {
+
+		$stmt = $dbh->prepare("DELETE FROM license WHERE name = :name;");
+		$stmt->bindParam(':name', $name);
+
 		foreach($arr_diff['delete'] as $name) {
-			$sql = "DELETE FROM license WHERE name = ".$db->quote($name).";";
-			$db->query($sql);
+			$stmt->execute();
 		}
 	}
 	
 	if(count($arr_diff['insert'])) {
+
+		$stmt = $dbh->prepare("INSERT INTO license (name) VALUES (:name);");
+		$stmt->bindParam(':name', $name);
+
 		foreach($arr_diff['insert'] as $name) {
-			$arr_insert = array('name' => $name);
-			$db->autoExecute('license', $arr_insert, MDB2_AUTOQUERY_INSERT);
+			$stmt->execute();
 		}
 	}
 	
