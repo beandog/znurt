@@ -22,7 +22,6 @@
 	if(count($arr['delete'])) {
 		foreach($arr['delete'] as $name) {
 			$sql = "DELETE FROM arch WHERE name = ".$db->quote($name).";";
-			shell::msg($sql);
 			$db->query($sql);
 		}
 	}
