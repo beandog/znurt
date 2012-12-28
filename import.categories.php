@@ -6,13 +6,13 @@
 	
 	require_once 'class.portage.category.php';
 	
+	// Reset sequence if table is empty
 	$sql = "SELECT COUNT(1) FROM category;";
-	$count = $db->getOne($sql);
-	
-	// If no categories, reset the sequence
-	if($count === "0") {
+	$sth = $dbh->query($sql);
+	$num_db_categories = $sth->fetchColumn();
+	if($num_db_categories === 0) {
 		$sql = "ALTER SEQUENCE category_id_seq RESTART WITH 1;";
-		$db->query($sql);
+		$dbh->exec($sql);
 	}
 	
 	$arr = $tree->getCategories();
@@ -20,36 +20,41 @@
 	$arr_diff = importDiff('category', $arr);
 	
 	if(count($arr_diff['delete'])) {
+
+		$stmt = $dbh->prepare("DELETE FROM category WHERE name = :name;");
+		$stmt->bindParam(':name', $name);
+
 		foreach($arr_diff['delete'] as $name) {
-			$sql = "DELETE FROM category WHERE name = ".$db->quote($name).";";
-			shell::msg($sql);
-			$db->query($sql);
+			$stmt->execute();
 		}
 	}
 	
 	if(count($arr_diff['insert'])) {
+
+		$stmt_category = $dbh->prepare("INSERT INTO category (name) VALUES (:name);");
+		$stmt_category->bindParam(':name', $name);
+
 		foreach($arr_diff['insert'] as $name) {
-			$arr_insert = array('name' => $name);
-			$db->autoExecute('category', $arr_insert, MDB2_AUTOQUERY_INSERT);
-		
-			$category_id = $db->lastInsertID();
-			
-			$c = new PortageCategory($name);
-			
-			foreach($c->getDescriptions() as $lingua => $description) {
-			
-				$arr_insert = array(
-					'category' => $category_id,
-					'lingua' => $lingua,
-					'description' => $description,
-				);
-				
-				$db->autoExecute('category_description', $arr_insert, MDB2_AUTOQUERY_INSERT);
-				
+			$stmt_category->execute();
+
+			if($verbose) {
+				echo "import category: $name";
+				echo "\n";
 			}
 		
+			$category_id = $dbh->lastInsertID('category_id_seq');
+			
+			$c = new PortageCategory($name);
+
+			$stmt_category_description = $dbh->prepare("INSERT INTO category_description (category, lingua, description) VALUES (:category_id, :lingua, :description);");
+			$stmt_category_description->bindParam(':category_id', $category_id);
+			$stmt_category_description->bindParam(':lingua', $lingua);
+			$stmt_category_description->bindParam(':description', $description);
+			
+			foreach($c->getDescriptions() as $lingua => $description) {
+				$stmt_category_description->execute();
+			}
 		}
-		
 	}
 	
 ?>
