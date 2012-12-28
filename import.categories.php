@@ -52,14 +52,4 @@
 		
 	}
 	
-	// FIXME I should check the mtimes of the directories
-	// instead, just to get an idea of when things were
-	// last changed.  Also, store the metadata mtime.
-	
-	// Update descriptions
-	if($verbose)
-		shell::msg("Updating descriptions");
-	$sql = "SELECT name, id FROM category;";
-	$arr = $db->getAssoc($sql);
-
 ?>
