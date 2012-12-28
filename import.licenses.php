@@ -2,9 +2,7 @@
 
 	require_once 'header.php';
 	
-	if(!$tree) {
-		$tree =& PortageTree::singleton();
-	}
+	$tree =& PortageTree::singleton();
 	
 	$table = 'license';
 	
