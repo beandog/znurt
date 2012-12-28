@@ -32,6 +32,8 @@
 	
 	if(count($arr_import_diff['insert'])) {
 
+		sort($arr_import_diff['insert']);
+
 		$stmt = $dbh->prepare("INSERT INTO arch (name) VALUES (:name);");
 		$stmt->bindParam(':name', $name);
 
