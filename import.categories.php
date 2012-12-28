@@ -44,14 +44,14 @@
 		
 			$db_category_id = $dbh->lastInsertID('category_id_seq');
 			
-			$c = new PortageCategory($name);
+			$obj_portage_category = new PortageCategory($name);
 
 			$stmt_category_description = $dbh->prepare("INSERT INTO category_description (category, lingua, description) VALUES (:category_id, :lingua, :description);");
 			$stmt_category_description->bindParam(':category_id', $db_category_id);
 			$stmt_category_description->bindParam(':lingua', $lingua);
 			$stmt_category_description->bindParam(':description', $description);
 			
-			foreach($c->getDescriptions() as $lingua => $description) {
+			foreach($obj_portage_category->getDescriptions() as $lingua => $description) {
 				$stmt_category_description->execute();
 			}
 		}
