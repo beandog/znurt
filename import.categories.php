@@ -15,26 +15,26 @@
 		$dbh->exec($sql);
 	}
 	
-	$arr = $tree->getCategories();
+	$arr_tree_categories = $tree->getCategories();
 	
-	$arr_diff = importDiff('category', $arr);
+	$arr_import_diff = importDiff('category', $arr_tree_categories);
 	
-	if(count($arr_diff['delete'])) {
+	if(count($arr_import_diff['delete'])) {
 
 		$stmt = $dbh->prepare("DELETE FROM category WHERE name = :name;");
 		$stmt->bindParam(':name', $name);
 
-		foreach($arr_diff['delete'] as $name) {
+		foreach($arr_import_diff['delete'] as $name) {
 			$stmt->execute();
 		}
 	}
 	
-	if(count($arr_diff['insert'])) {
+	if(count($arr_import_diff['insert'])) {
 
 		$stmt_category = $dbh->prepare("INSERT INTO category (name) VALUES (:name);");
 		$stmt_category->bindParam(':name', $name);
 
-		foreach($arr_diff['insert'] as $name) {
+		foreach($arr_import_diff['insert'] as $name) {
 			$stmt_category->execute();
 
 			if($verbose) {
@@ -42,12 +42,12 @@
 				echo "\n";
 			}
 		
-			$category_id = $dbh->lastInsertID('category_id_seq');
+			$db_category_id = $dbh->lastInsertID('category_id_seq');
 			
 			$c = new PortageCategory($name);
 
 			$stmt_category_description = $dbh->prepare("INSERT INTO category_description (category, lingua, description) VALUES (:category_id, :lingua, :description);");
-			$stmt_category_description->bindParam(':category_id', $category_id);
+			$stmt_category_description->bindParam(':category_id', $db_category_id);
 			$stmt_category_description->bindParam(':lingua', $lingua);
 			$stmt_category_description->bindParam(':description', $description);
 			
