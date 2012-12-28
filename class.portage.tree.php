@@ -37,27 +37,15 @@
 				$this->tree = $x;
 		}
 		
-		public function getArches($prefix = false) {
+		public function getArches() {
 		
 			$filename = $this->getTree().'/profiles/arch.list';
 			$arr = file($filename, FILE_IGNORE_NEW_LINES);
 			
-			$barrier = key(preg_grep("/^\s*$/", $arr));
-			
-			if($prefix) {
-				$arr = array_slice($arr, $barrier);
-			} else {
-				$arr = array_slice($arr, 0, $barrier);
-			}
-			
 			$arr = preg_grep('/^[a-z]/', $arr);
 			sort($arr);
-			
-			foreach($arr as $value) {
-				$arches[] = $value;
-			}
-			
-			return $arches;
+
+			return $arr;
 		
 		}
 		
