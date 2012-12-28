@@ -6,6 +6,7 @@
 	// See header.mdb2.php for generic connection settings
 	// See header.dsn.php for specific connection settings for your system
 	require_once 'header.mdb2.php';
+	require_once 'header.pdo.php';
 
 	// Options for detailed output
 	// Can be overriden in 'header.config.php', which is not part of git
