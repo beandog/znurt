@@ -4,9 +4,9 @@
 	
 	$tree =& PortageTree::singleton();
 	
-	$arr = $tree->getLicenses();
+	$arr_tree_licenses = $tree->getLicenses();
 	
-	$arr_diff = importDiff('license', $arr);
+	$arr_import_diff = importDiff('license', $arr_tree_licenses);
 
 	// Reset sequence if table is empty
 	$sql = "SELECT COUNT(1) FROM license;";
@@ -17,22 +17,22 @@
 		$dbh->exec($sql);
 	}
 	
-	if(count($arr_diff['delete'])) {
+	if(count($arr_import_diff['delete'])) {
 
 		$stmt = $dbh->prepare("DELETE FROM license WHERE name = :name;");
 		$stmt->bindParam(':name', $name);
 
-		foreach($arr_diff['delete'] as $name) {
+		foreach($arr_import_diff['delete'] as $name) {
 			$stmt->execute();
 		}
 	}
 	
-	if(count($arr_diff['insert'])) {
+	if(count($arr_import_diff['insert'])) {
 
 		$stmt = $dbh->prepare("INSERT INTO license (name) VALUES (:name);");
 		$stmt->bindParam(':name', $name);
 
-		foreach($arr_diff['insert'] as $name) {
+		foreach($arr_import_diff['insert'] as $name) {
 			$stmt->execute();
 		}
 	}
