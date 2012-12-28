@@ -37,6 +37,4 @@
 		}
 	}
 	
-	unset($arr, $arr_diff);
-
 ?>
