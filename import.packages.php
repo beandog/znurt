@@ -112,8 +112,6 @@
 		$arr_package_ids[$row['category_name']][$row['package_name']] = $row['package'];
 	}
 	
-	$table = 'package';
-	
 	foreach($arr_categories as $category_id => $category_name) {
 
 		echo "packages import: $category_name\n";
@@ -128,7 +126,7 @@
 		// 2) you're breaking the whole "snapshot" approach.
 		if(count($arr_diff['delete'])) {
 			foreach($arr_diff['delete'] as $package_name) {
-				$sql = "DELETE FROM $table WHERE name = ".$db->quote($package_name)." AND category = $category_id;";
+				$sql = "DELETE FROM package WHERE name = ".$db->quote($package_name)." AND category = $category_id;";
 				$db->query($sql);
 			}
 		}
@@ -146,7 +144,7 @@
  					'name' => $package_name,
  					'portage_mtime' => $p->portage_mtime,
  				);
-				$db->autoExecute($table, $arr_insert, MDB2_AUTOQUERY_INSERT);
+				$db->autoExecute('package', $arr_insert, MDB2_AUTOQUERY_INSERT);
 				
 				$package_id = $db->lastInsertID();
 				
