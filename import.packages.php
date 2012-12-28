@@ -38,7 +38,15 @@
 	require_once 'class.db.package.php';
 	require_once 'class.db.package.changelog.php';
 	require_once 'class.db.package.manifest.php';
-	
+
+	// Verify that categories are imported
+	$sql = "SELECT COUNT(1) FROM category;";
+	$count = $db->getOne($sql);
+	if($count === '0') {
+		die("There are no categories in the database.  Import those before importing packages.\n");
+		exit;
+	}
+
 	$arr_update = array();
 	
 	// Find the packages updated since last time
