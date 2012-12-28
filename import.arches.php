@@ -12,6 +12,14 @@
 	$arr_arches = array_merge($arr_arches, $tree->getArches(true));
 	
 	$arr = importDiff('arch', $arr_arches);
+
+	// Reset sequence if table is empty
+	$sql = "SELECT COUNT(1) FROM arch;";
+	$count = $db->getOne($sql);
+	if($count == 0) {
+		$sql = "ALTER SEQUENCE arch_id_seq RESTART WITH 1;";
+		$db->query($sql);
+	}
 	
 	if(count($arr['delete'])) {
 		foreach($arr['delete'] as $name) {
