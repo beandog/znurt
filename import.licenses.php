@@ -41,5 +41,9 @@
 			}
 		}
 	}
+
+	// Cleanup
+	$arr_import_diff = null;
+	$arr_tree_licenses = null;
 	
 ?>
