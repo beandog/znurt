@@ -29,6 +29,10 @@
 		}
 	}
 	
+	// FIXME
+	// If there are new / updated category descriptions, add those to
+	// the database, regardless of whether the category is in there
+	// or not.
 	if(count($arr_import_diff['insert'])) {
 
 		$stmt_category = $dbh->prepare("INSERT INTO category (name) VALUES (:name);");
