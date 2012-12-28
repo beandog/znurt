@@ -111,13 +111,22 @@
 	foreach($arr as $row) {
 		$arr_package_ids[$row['category_name']][$row['package_name']] = $row['package'];
 	}
+
+	$num_categories = count($arr_categories);
+	$counter_categories = 1;
+
+	echo "importing category packages\n";
 	
 	foreach($arr_categories as $category_id => $category_name) {
 
-		echo "packages import: $category_name\n";
-	
 		$c = new PortageCategory($category_name);
 		$arr_packages = $c->getPackages();
+
+		$num_packages = count($arr_packages);
+		$counter_categories = str_pad($counter_categories, strlen($num_categories), 0, STR_PAD_LEFT);
+
+		echo "[$counter_categories/$num_categories] $category_name ($num_packages)\n";
+		$counter_categories++;
 		
 		$arr_diff = importDiff('package', $arr_packages, "category = $category_id");
 		
