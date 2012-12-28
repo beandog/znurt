@@ -5,7 +5,6 @@
 	$tree =& PortageTree::singleton();
 	
 	require_once 'class.portage.category.php';
-	require_once 'class.db.category.php';
 	
 	$sql = "SELECT COUNT(1) FROM category;";
 	$count = $db->getOne($sql);
@@ -62,16 +61,5 @@
 		shell::msg("Updating descriptions");
 	$sql = "SELECT name, id FROM category;";
 	$arr = $db->getAssoc($sql);
-	
-	// FIXME work with linguas
-// 	foreach($arr as $category_name => $category) {
-// 	
-// 		$db_category = new DBCategory($category);
-// 		$c = new PortageCategory($category_name);
-// 		
-// 		if($db_category->description != $c->description['en'])
-// 			$db_category->description = $c->description['en'];
-// 	
-// 	}
 
 ?>
