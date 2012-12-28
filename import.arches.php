@@ -4,10 +4,7 @@
 	
 	$tree =& PortageTree::singleton();
 	
-	// FIXME This is really dumb, just grab all the arches
-	// since I look at all of them now.
 	$arr_arches = $tree->getArches();
-	$arr_arches = array_merge($arr_arches, $tree->getArches(true));
 	
 	$arr_import_diff = importDiff('arch', $arr_arches);
 
