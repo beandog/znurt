@@ -9,30 +9,35 @@
 	$arr_arches = $tree->getArches();
 	$arr_arches = array_merge($arr_arches, $tree->getArches(true));
 	
-	$arr = importDiff('arch', $arr_arches);
+	$arr_import_diff = importDiff('arch', $arr_arches);
 
 	// Reset sequence if table is empty
 	$sql = "SELECT COUNT(1) FROM arch;";
-	$count = $db->getOne($sql);
-	if($count == 0) {
+	$sth = $dbh->query($sql);
+	$num_db_arches = $sth->fetchColumn();
+	if($num_db_arches === 0) {
 		$sql = "ALTER SEQUENCE arch_id_seq RESTART WITH 1;";
-		$db->query($sql);
+		$dbh->exec($sql);
 	}
-	
-	if(count($arr['delete'])) {
-		foreach($arr['delete'] as $name) {
-			$sql = "DELETE FROM arch WHERE name = ".$db->quote($name).";";
-			$db->query($sql);
-		}
-	}
-	
-	if(count($arr['insert'])) {
-		foreach($arr['insert'] as $name) {
-			$arr_insert = array('name' => $name);
-			$db->autoExecute('arch', $arr_insert, MDB2_AUTOQUERY_INSERT);
-		}
-	}
-	
-	unset($arr);
 
+	if(count($arr_import_diff['delete'])) {
+
+		$stmt = $dbh->prepare("DELETE FROM arch WHERE name = :name;");
+		$stmt->bindParam(':name', $name);
+
+		foreach($arr_import_diff['delete'] as $name) {
+			$stmt->execute();
+		}
+	}
+	
+	if(count($arr_import_diff['insert'])) {
+
+		$stmt = $dbh->prepare("INSERT INTO arch (name) VALUES (:name);");
+		$stmt->bindParam(':name', $name);
+
+		foreach($arr_import_diff['insert'] as $name) {
+			$stmt->execute();
+		}
+	}
+	
 ?>
