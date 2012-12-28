@@ -1,4 +1,4 @@
-<?
+<?php
 
 	class PortageAtom extends PortageEbuild {
 	

@@ -1,4 +1,4 @@
-<?
+<?php
 	// Testing categories
 
 	require_once 'class.portage.tree.php';

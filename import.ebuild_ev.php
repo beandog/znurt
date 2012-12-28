@@ -1,4 +1,4 @@
-<?
+<?php
 
 // 	$verbose = true;
 // 	$qa = true;	

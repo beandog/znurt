@@ -1,4 +1,4 @@
-<?
+<?php
 
 	/**
 	* Create the 'extended version' of the original versions,

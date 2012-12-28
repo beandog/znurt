@@ -1,4 +1,4 @@
-<?
+<?php
 
 	// Testing parsing atoms
 
