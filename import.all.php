@@ -38,7 +38,7 @@
 	
 	// Thankfully, I've never really had these break down much, never
 	// had much use for the grouping.
-	$arr_import['base'] = array('arches', 'eclasses', 'herds', 'licenses');
+	$arr_import['base'] = array('arches', 'herds', 'licenses');
 	$arr_import['packages'] = array('categories', 'packages', 'bugzilla');
 	$arr_import['ebuilds'] = array('ebuilds');
 	$arr_import['metadata'] = array('ebuild_metadata', 'ebuild_arch', 'ebuild_homepage', 'ebuild_license', 'package_mask', 'ebuild_mask', 'ebuild_ev', 'use_global', 'use_local', 'use_expand', 'ebuild_use', 'ebuild_depend');
