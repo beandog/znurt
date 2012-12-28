@@ -7,8 +7,6 @@
 	require_once 'class.portage.category.php';
 	require_once 'class.db.category.php';
 	
-	$table = 'category';
-	
 	$sql = "SELECT COUNT(1) FROM category;";
 	$count = $db->getOne($sql);
 	
@@ -20,11 +18,11 @@
 	
 	$arr = $tree->getCategories();
 	
-	$arr_diff = importDiff($table, $arr);
+	$arr_diff = importDiff('category', $arr);
 	
 	if(count($arr_diff['delete'])) {
 		foreach($arr_diff['delete'] as $name) {
-			$sql = "DELETE FROM $table WHERE name = ".$db->quote($name).";";
+			$sql = "DELETE FROM category WHERE name = ".$db->quote($name).";";
 			shell::msg($sql);
 			$db->query($sql);
 		}
@@ -33,7 +31,7 @@
 	if(count($arr_diff['insert'])) {
 		foreach($arr_diff['insert'] as $name) {
 			$arr_insert = array('name' => $name);
-			$db->autoExecute($table, $arr_insert, MDB2_AUTOQUERY_INSERT);
+			$db->autoExecute('category', $arr_insert, MDB2_AUTOQUERY_INSERT);
 		
 			$category_id = $db->lastInsertID();
 			
