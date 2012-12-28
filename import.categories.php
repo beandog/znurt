@@ -56,5 +56,10 @@
 			}
 		}
 	}
+
+	// Cleanup
+	$arr_import_diff = null;
+	$arr_tree_categories = null;
+	$obj_portage_category = null;
 	
 ?>
