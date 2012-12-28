@@ -4,9 +4,9 @@
 	
 	$tree =& PortageTree::singleton();
 	
-	$arr_arches = $tree->getArches();
+	$arr_tree_arches = $tree->getArches();
 	
-	$arr_import_diff = importDiff('arch', $arr_arches);
+	$arr_import_diff = importDiff('arch', $arr_tree_arches);
 
 	// Reset sequence if table is empty
 	$sql = "SELECT COUNT(1) FROM arch;";
