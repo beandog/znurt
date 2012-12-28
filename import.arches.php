@@ -2,9 +2,7 @@
 
 	require_once 'header.php';
 	
-	if(!$tree) {
-		$tree =& PortageTree::singleton();
-	}
+	$tree =& PortageTree::singleton();
 	
 	// FIXME This is really dumb, just grab all the arches
 	// since I look at all of them now.
