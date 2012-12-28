@@ -36,6 +36,11 @@
 
 		foreach($arr_import_diff['insert'] as $name) {
 			$stmt->execute();
+
+			if($verbose) {
+				echo "import arch: $name";
+				echo "\n";
+			}
 		}
 	}
 	
