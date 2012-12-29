@@ -1,5 +1,13 @@
 <?php
 
+	// README.php : This returns FALSE
+	/*
+	$sql = "SELECT FALSE;";
+	$sth = $dbh->query($sql);
+	$var = $sth->fetchColumn();
+	var_dump($var);
+	*/
+
 	/**
 	 * This script creates a temporary file in /tmp named znurt[foo] that sets itself
 	 * to the mtime of the latest package mtime in the database.  This way, I can simply
@@ -41,32 +49,35 @@
 
 	// Verify that categories are imported
 	$sql = "SELECT COUNT(1) FROM category;";
-	$count = $db->getOne($sql);
-	if($count === '0') {
+	$sth = $dbh->query($sql);
+	$num_db_categories = $sth->fetchColumn();
+	if($num_db_categories === 0) {
 		die("There are no categories in the database.  Import those before importing packages.\n");
 		exit;
 	}
 
 	$arr_update = array();
-	
-	// Find the packages updated since last time
+
+	// Reset sequence if table is empty
 	$sql = "SELECT COUNT(1) FROM package;";
-	$count = $db->getOne($sql);
-	if(!$count || $debug)
+	$sth = $dbh->query($sql);
+	$num_db_packages = $sth->fetchColumn();
+	if($num_db_packages === 0) {
+		$sql = "ALTER SEQUENCE package_id_seq RESTART WITH 1;";
+		$dbh->exec($sql);
+	}
+	
+	if($num_db_packages === 0 || $debug)
 		$all = true;
 	else {
 	
 		$sql = "SELECT MAX(portage_mtime) FROM package;";
-		$max_portage_mtime = $db->getOne($sql);
-		
+		$sth = $dbh->query($sql);
+		$max_portage_mtime = $sth->fetchColumn();
+
 		if(is_null($max_portage_mtime))
 			$all = true;
 	
-	}
-	
-	if($count === "0") {
-		$sql = "ALTER SEQUENCE package_id_seq RESTART WITH 1;";
-		$db->query($sql);
 	}
 	
 	if(!$all) {
@@ -104,8 +115,211 @@
 	}
 	
 	$sql = "SELECT id, name FROM category ORDER BY name;";
-	$arr_categories = $db->getAssoc($sql);
+	$sth = $dbh->query($sql);
+	$num_db_categories = $sth->rowCount();
+
+
+	function getCategoryPackageNames($str_category_name) {
+
+		$obj_portage_category = new PortageCategory($str_category_name);
+		$arr_package_names = $obj_portage_category->getPackages();
+
+		return $arr_package_names;
+		
+	}
+
+	$arr_db_category = $sth->fetch();
+
+	$arr_package_names = getCategoryPackageNames($arr_db_category['name']);
+
+	// This would usually be a foreach loop
+	$str_package_name = current($arr_package_names);
+
+	// Check to see if the package is already in the database
+	// These three lines would be outside the for loop, because you only set it once.
+	// README.php: It's logical to use bindParam() if you are going to run a LOT of queries with the same
+	// variable names.  But, if you are just running something once, and want to use a prepared
+	// statement, then bindValue() makes more sense.
+	// bindParam() is just a nice shortcut, because all you have to do is change the variable values (instead
+	// of bindValue() where you would re-run the code).  So, bindParam() once or bindValue() multiple times. :)
+	$stmt = $dbh->prepare("SELECT id FROM package WHERE category = :category AND name = :name");
+	$stmt->bindParam(':category', $arr_db_category['id']);
+	$stmt->bindParam(':name', $str_package_name);
 	
+	// This line would execute the query, using the variables that are set by $arr_db_category
+	// and this would be inside the for loop.
+	$stmt->execute();
+	// So would this, since we're returning just this result
+	// README.php : If there is ZERO rows returned, then the result will be FALSE
+	$db_package_id = $stmt->fetchColumn();
+
+	/*
+	 * Insert a 'package' record
+	 * @return primary key
+	 */
+	// FIXME: standardize this stuff / create functions for insert of arbitrary values
+	function insert_package($db_category_id, $str_package_name, $int_portage_mtime) {
+
+		global $dbh;
+	
+		$stmt = $dbh->prepare("INSERT INTO package (category, name, portage_mtime) VALUES (:category, :name, :portage_mtime);");
+		$stmt->bindValue(':category', $db_category_id);
+		$stmt->bindValue(':name', $str_package_name);
+		$stmt->bindValue(':portage_mtime', $int_portage_mtime);
+
+		$stmt->execute();
+
+		$int_db_package_id = $dbh->lastInsertID('package_id_seq');
+
+		return $int_db_package_id;
+
+	}
+
+	// FIXME: standardize this stuff / create functions for insert of arbitrary values
+	function insert_package_changelog($db_package_id, $arr_values) {
+
+		global $dbh;
+
+		// FIXME : Create a build_insert_query function
+		$sql = "INSERT INTO package_changelog (package, changelog, mtime, filesize, recent_changes) VALUES (:package, :changelog, :mtime, :filesize, :recent_changes);";
+		$stmt = $dbh->prepare($sql);
+		$stmt->bindValue(':package', $db_package_id);
+		foreach($arr_values as $key => $value)
+			$stmt->bindValue(":$key", $value);
+
+		$bool = $stmt->execute();
+
+		if($bool === false) {
+			print_r($stmt->errorInfo());
+		}
+
+		return $bool;
+
+	}
+
+	// FIXME: standardize this stuff / create functions for insert of arbitrary values
+	function insert_package_manifest($db_package_id, $arr_values) {
+
+		global $dbh;
+
+		$sql = "INSERT INTO package_manifest (package, manifest, mtime, hash, filesize) VALUES (:package, :manifest, :mtime, :hash, :filesize);";
+		$stmt = $dbh->prepare($sql);
+		$stmt->bindValue(':package', $db_package_id);
+		foreach($arr_values as $key => $value)
+			$stmt->bindValue(":$key", $value);
+
+		print_r($arr_values);
+
+		$bool = $stmt->execute();
+
+		if($bool === false) {
+			print_r($stmt->errorInfo());
+		}
+
+		return $bool;
+
+	}
+
+
+
+	function import_category_package($db_category_id, $str_category_name, $str_package_name) {
+
+		// FIXME ugh.
+		global $dbh;
+	
+		// Insert package
+		$obj_portage_package = new PortagePackage($str_category_name, $str_package_name);
+		$int_portage_mtime =& $obj_portage_package->portage_mtime;
+		$int_db_package_id = insert_package($db_category_id, $str_package_name, $int_portage_mtime);
+
+		// Insert package changelog
+		$obj_package_changelog = new PackageChangelog($str_category_name, $str_package_name);
+		$arr_package_changelog_vars = array('changelog', 'mtime', 'filesize', 'recent_changes');
+		foreach($arr_package_changelog_vars as $str)
+			$arr_package_changelog_values[$str] =& $obj_package_changelog->{$str};
+		insert_package_changelog($int_db_package_id, $arr_package_changelog_values);
+
+		// Insert package manifest 
+		// FIXME: Fetching 'manifest' from object is broken
+		$obj_package_manifest = new PackageManifest($str_category_name, $str_package_name);
+		print_r($obj_package_manifest);
+		$arr_package_manifest_vars = array('manifest', 'mtime', 'hash', 'filesize');
+		foreach($arr_package_manifest_vars as $str)
+			$arr_package_manifest_values[$str] =& $obj_package_changelog->{$str};
+		insert_package_manifest($int_db_package_id, $arr_package_manifest_values);
+
+
+		die;
+
+
+				// New Manifest entry
+				$arr_insert = array(
+					'package' => $package_id,
+					'manifest' => $ma->manifest,
+					'mtime' => $ma->mtime,
+					'hash' => $ma->hash,
+					'filesize' => $ma->filesize,
+				);
+				
+				$db->autoExecute('package_manifest', $arr_insert, MDB2_AUTOQUERY_INSERT);
+				
+				// Import package files
+				$arr = $ma->getDistfiles();
+				
+				foreach($arr as $filename) {
+				
+					$arr_insert = array(
+						'package' => $package_id,
+						'filename' => $filename,
+						'type' => 'DIST',
+						'hash' => $ma->getHash($filename),
+						'filesize' => $ma->getFilesize($filename),
+					);
+					
+					$db->autoExecute('package_files', $arr_insert, MDB2_AUTOQUERY_INSERT);
+				
+				}
+				
+				// Import patches
+				$arr = $ma->getFiles();
+				
+				foreach($arr as $filename) {
+				
+					$arr_insert = array(
+						'package' => $package_id,
+						'filename' => $filename,
+						'type' => 'AUX',
+						'hash' => $ma->getHash($filename),
+						'filesize' => $ma->getFilesize($filename),
+					);
+					
+					$db->autoExecute('package_files', $arr_insert, MDB2_AUTOQUERY_INSERT);
+				
+				}
+
+		
+
+	}
+
+
+	if($db_package_id === false) {
+		import_category_package($arr_db_category['id'], $arr_db_category['name'], $str_package_name);
+	}
+
+
+
+	die;
+
+	while($arr = $sth->fetch()) {
+
+		// print_r($arr);
+
+	}
+	echo $num_db_categories;
+	die;
+
+	
+	// FIXME: REMOVE Massive query: 16k rows
 	$sql = "SELECT category, package, category_name, package_name FROM view_package;";
 	$arr = $db->getAll($sql);
 	foreach($arr as $row) {
@@ -128,6 +342,7 @@
 		echo "[$counter_categories/$num_categories] $category_name ($num_packages)\n";
 		$counter_categories++;
 		
+		// FIXME: REMOVE This is also going to be a LARGE query
 		$arr_diff = importDiff('package', $arr_packages, "category = $category_id");
 		
 		// FIXME Flag to be deleted, execute later
