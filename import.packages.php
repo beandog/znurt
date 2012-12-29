@@ -67,6 +67,10 @@
 		$dbh->exec($sql);
 	}
 	
+	/**
+	 * Migrate to update / remove
+	 */
+	/*
 	if($num_db_packages === 0 || $debug)
 		$all = true;
 	else {
@@ -113,6 +117,7 @@
 		}
 		
 	}
+	*/
 	
 	$sql = "SELECT id, name FROM category ORDER BY name;";
 	$sth = $dbh->query($sql);
@@ -158,152 +163,199 @@
 	 * @return primary key
 	 */
 	// FIXME: standardize this stuff / create functions for insert of arbitrary values
-	function insert_package($db_category_id, $str_package_name, $int_portage_mtime) {
+	function insert_package($arr_package) {
 
 		global $dbh;
 	
 		$stmt = $dbh->prepare("INSERT INTO package (category, name, portage_mtime) VALUES (:category, :name, :portage_mtime);");
-		$stmt->bindValue(':category', $db_category_id);
-		$stmt->bindValue(':name', $str_package_name);
-		$stmt->bindValue(':portage_mtime', $int_portage_mtime);
+		$stmt->bindValue(':category', $arr_package['category']);
+		$stmt->bindValue(':name', $arr_package['name']);
+		$stmt->bindValue(':portage_mtime', $arr_package['portage_mtime']);
 
-		$stmt->execute();
+		$boot = $stmt->execute();
 
-		$int_db_package_id = $dbh->lastInsertID('package_id_seq');
-
-		return $int_db_package_id;
+		if($bool === false) {
+			print_r($stmt->errorInfo());
+			return false;
+		} else {
+			$int_db_package_id = $dbh->lastInsertID('package_id_seq');
+			return $int_db_package_id;
+		}
 
 	}
 
 	// FIXME: standardize this stuff / create functions for insert of arbitrary values
-	function insert_package_changelog($db_package_id, $arr_values) {
+	function insert_package_changelog($arr_package_changelog) {
 
 		global $dbh;
 
 		// FIXME : Create a build_insert_query function
 		$sql = "INSERT INTO package_changelog (package, changelog, mtime, filesize, recent_changes) VALUES (:package, :changelog, :mtime, :filesize, :recent_changes);";
 		$stmt = $dbh->prepare($sql);
-		$stmt->bindValue(':package', $db_package_id);
-		foreach($arr_values as $key => $value)
-			$stmt->bindValue(":$key", $value);
+		$stmt->bindValue(':package', $arr_package_changelog['package']);
+		$stmt->bindValue(':changelog', $arr_package_changelog['changelog']);
+		$stmt->bindValue(':mtime', $arr_package_changelog['mtime']);
+		$stmt->bindValue(':filesize', $arr_package_changelog['filesize']);
+		$stmt->bindValue(':recent_changes', $arr_package_changelog['recent_changes']);
 
 		$bool = $stmt->execute();
 
 		if($bool === false) {
 			print_r($stmt->errorInfo());
+			return false;
+		} else {
+			$int_db_package_changelog_id = $dbh->lastInsertID('package_changelog_id_seq');
+			return $int_db_package_changelog_id;
 		}
-
-		return $bool;
 
 	}
 
 	// FIXME: standardize this stuff / create functions for insert of arbitrary values
-	function insert_package_manifest($db_package_id, $arr_values) {
+	function insert_package_manifest($arr_package_manifest) {
 
 		global $dbh;
 
 		$sql = "INSERT INTO package_manifest (package, manifest, mtime, hash, filesize) VALUES (:package, :manifest, :mtime, :hash, :filesize);";
 		$stmt = $dbh->prepare($sql);
-		$stmt->bindValue(':package', $db_package_id);
-		foreach($arr_values as $key => $value)
-			$stmt->bindValue(":$key", $value);
-
-		print_r($arr_values);
+		$stmt->bindValue(':package', $arr_package_manifest['package']);
+		$stmt->bindValue(':manifest', $arr_package_manifest['manifest']);
+		$stmt->bindValue(':mtime', $arr_package_manifest['mtime']);
+		$stmt->bindValue(':hash', $arr_package_manifest['hash']);
+		$stmt->bindValue(':filesize', $arr_package_manifest['filesize']);
 
 		$bool = $stmt->execute();
 
 		if($bool === false) {
 			print_r($stmt->errorInfo());
+			return false;
+		} else {
+			$int_db_package_manifest_id = $dbh->lastInsertID('package_manifest_id_seq');
+			return $int_db_package_manifest_id;
 		}
 
 		return $bool;
 
 	}
 
+	function get_db_category_id($str_category_name) {
+
+		global $dbh;
+
+		$str_quote_category_name = $dbh->quote($str_category_name);
+		$sql = "SELECT id FROM category WHERE name = $str_quote_category_name;";
+		$sth = $dbh->query($sql);
+		$int_db_category_id = $sth->fetchColumn();
+
+		return $int_db_category_id;
+		
+	}
 
 
-	function import_category_package($db_category_id, $str_category_name, $str_package_name) {
+	function import_package($str_category_name, $str_package_name) {
 
 		// FIXME ugh.
 		global $dbh;
-	
+
+		// Fetch category id
+		$int_db_category_id = get_db_category_id($str_category_name);
+
+		if($int_db_category_id === false) {
+			echo "category $str_category_name is not imported";
+			break;
+		}
+
 		// Insert package
 		$obj_portage_package = new PortagePackage($str_category_name, $str_package_name);
 		$int_portage_mtime =& $obj_portage_package->portage_mtime;
-		$int_db_package_id = insert_package($db_category_id, $str_package_name, $int_portage_mtime);
+		$arr_package = array(
+			'category' => $int_db_category_id,
+			'name' => $str_package_name,
+			'mtime' => $int_portage_mtime,
+		);
+		$int_db_package_id = insert_package($arr_package);
 
 		// Insert package changelog
 		$obj_package_changelog = new PackageChangelog($str_category_name, $str_package_name);
-		$arr_package_changelog_vars = array('changelog', 'mtime', 'filesize', 'recent_changes');
-		foreach($arr_package_changelog_vars as $str)
-			$arr_package_changelog_values[$str] =& $obj_package_changelog->{$str};
-		insert_package_changelog($int_db_package_id, $arr_package_changelog_values);
+		$arr_package_changelog = array(
+			'package' => $int_db_package_id,
+			'changelog' => $obj_package_changelog->changelog,
+			'mtime' => $obj_package_changelog->mtime,
+			'filesize' => $obj_package_changelog->filesize,
+			'recent_changes' => $obj_package_changelog->recent_changes,
+		);
+		$int_db_package_changelog_id = insert_package_changelog($arr_package_changelog);
 
 		// Insert package manifest 
 		// FIXME: Fetching 'manifest' from object is broken
 		$obj_package_manifest = new PackageManifest($str_category_name, $str_package_name);
-		print_r($obj_package_manifest);
 		$arr_package_manifest_vars = array('manifest', 'mtime', 'hash', 'filesize');
-		foreach($arr_package_manifest_vars as $str)
-			$arr_package_manifest_values[$str] =& $obj_package_changelog->{$str};
-		insert_package_manifest($int_db_package_id, $arr_package_manifest_values);
+		$arr_package_manifest = array(
+			'package' => $int_db_package_id,
+			'manifest' => $obj_package_manifest->manifest,
+			'mtime' => $obj_package_manifest->mtime,
+			'hash' => $obj_package_manifest->hash,
+			'filesize' => $obj_package_manifest->filesize,
+		);
+		$int_db_package_manifest_id = insert_package_manifest($arr_package_manifest);
+
+		// Insert package distfiles
+		$arr_package_distfiles = $obj_package_manifest->getDistfiles();
+		$sql = "INSERT INTO package_files (package, filename, type, hash, filesize) VALUES (:package, :filename, :type, :hash, :filesize);";
+		$stmt = $dbh->prepare($sql);
+		foreach($arr_package_distfiles as $str_package_distfilename) {
+
+			$arr_insert = array(
+				'package' => $int_db_package_id,
+				'filename' => $str_package_distfilename,
+				'type' => 'DIST',
+				'hash' => $obj_package_manifest->getHash($str_package_distfilename),
+				'filesize' => $obj_package_manifest->getFilesize($str_package_distfilename),
+			);
 
 
-		die;
+			foreach($arr_insert as $key => $value)
+				$stmt->bindValue(":$key", $value);
 
+			$bool = $stmt->execute();
 
-				// New Manifest entry
-				$arr_insert = array(
-					'package' => $package_id,
-					'manifest' => $ma->manifest,
-					'mtime' => $ma->mtime,
-					'hash' => $ma->hash,
-					'filesize' => $ma->filesize,
-				);
-				
-				$db->autoExecute('package_manifest', $arr_insert, MDB2_AUTOQUERY_INSERT);
-				
-				// Import package files
-				$arr = $ma->getDistfiles();
-				
-				foreach($arr as $filename) {
-				
-					$arr_insert = array(
-						'package' => $package_id,
-						'filename' => $filename,
-						'type' => 'DIST',
-						'hash' => $ma->getHash($filename),
-						'filesize' => $ma->getFilesize($filename),
-					);
-					
-					$db->autoExecute('package_files', $arr_insert, MDB2_AUTOQUERY_INSERT);
-				
-				}
-				
-				// Import patches
-				$arr = $ma->getFiles();
-				
-				foreach($arr as $filename) {
-				
-					$arr_insert = array(
-						'package' => $package_id,
-						'filename' => $filename,
-						'type' => 'AUX',
-						'hash' => $ma->getHash($filename),
-						'filesize' => $ma->getFilesize($filename),
-					);
-					
-					$db->autoExecute('package_files', $arr_insert, MDB2_AUTOQUERY_INSERT);
-				
-				}
+			if($bool === false) {
+				print_r($stmt->errorInfo());
+				$int_db_package_file_id = null;
+			} else {
+				$int_db_package_file_id = $dbh->lastInsertID('package_files_id_seq');
+			}
+		}
 
-		
+		// Insert remaining package files (patches)
+		$arr_package_files = $obj_package_manifest->getFiles();
+		$sql = "INSERT INTO package_files (package, filename, type, hash, filesize) VALUES (:package, :filename, :type, :hash, :filesize);";
+		$stmt = $dbh->prepare($sql);
+		foreach($arr_package_files as $str_package_filename) {
 
+			$arr_insert = array(
+				'package' => $int_db_package_id,
+				'filename' => $str_package_filename,
+				'type' => 'AUX',
+				'hash' => $obj_package_manifest->getHash($str_package_filename),
+				'filesize' => $obj_package_manifest->getFilesize($str_package_filename),
+			);
+
+			foreach($arr_insert as $key => $value)
+				$stmt->bindValue(":$key", $value);
+
+			$bool = $stmt->execute();
+
+			if($bool === false) {
+				$int_db_package_file_id = null;
+			} else {
+				$int_db_package_file_id = $dbh->lastInsertID('package_files_id_seq');
+			}
+		}
 	}
 
 
 	if($db_package_id === false) {
-		import_category_package($arr_db_category['id'], $arr_db_category['name'], $str_package_name);
+		import_package($arr_db_category['name'], $str_package_name);
 	}
 
 
