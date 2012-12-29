@@ -359,12 +359,9 @@
 	}
 
 
-
-	die;
-
 	while($arr = $sth->fetch()) {
 
-		// print_r($arr);
+		print_r($arr);
 
 	}
 	echo $num_db_categories;
