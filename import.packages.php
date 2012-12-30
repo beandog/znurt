@@ -47,83 +47,6 @@
 	require_once 'class.db.package.changelog.php';
 	require_once 'class.db.package.manifest.php';
 
-	// Verify that categories are imported
-	$sql = "SELECT COUNT(1) FROM category;";
-	$sth = $dbh->query($sql);
-	$num_db_categories = $sth->fetchColumn();
-	if($num_db_categories === 0) {
-		die("There are no categories in the database.  Import those before importing packages.\n");
-		exit;
-	}
-
-	$arr_update = array();
-
-	// Reset sequence if table is empty
-	$sql = "SELECT COUNT(1) FROM package;";
-	$sth = $dbh->query($sql);
-	$num_db_packages = $sth->fetchColumn();
-	if($num_db_packages === 0) {
-		$sql = "ALTER SEQUENCE package_id_seq RESTART WITH 1;";
-		$dbh->exec($sql);
-	}
-	
-	/**
-	 * Migrate to update / remove
-	 */
-	/*
-	if($num_db_packages === 0 || $debug)
-		$all = true;
-	else {
-	
-		$sql = "SELECT MAX(portage_mtime) FROM package;";
-		$sth = $dbh->query($sql);
-		$max_portage_mtime = $sth->fetchColumn();
-
-		if(is_null($max_portage_mtime))
-			$all = true;
-	
-	}
-	
-	if(!$all) {
-	
-		$categories = $tree->getCategories();
-	
-		$tmp = tempnam('/tmp', 'znurt');
-		touch($tmp, $max_portage_mtime);
-		
-		$arr = array();
-		
-		$dir = $tree->getTree();
-		
-		foreach($categories as $category_name) {
-			
-			$category_dir = $dir."/".$category_name;
-			
-			$exec = "find $category_dir -mindepth 1 -maxdepth 1 -type d -newer $tmp";
-			$arr = array_merge($arr, shell::cmd($exec));
-		}
-		unlink($tmp);
-		
-		$count = 0;
-		
-		foreach($arr as $name) {
-		
-			$name = str_replace($dir."/", "", $name);
-			$tmp = explode("/", $name);
-			$arr_update[$tmp[0]][] = $tmp[1];
-			
-			$count++;
-		
-		}
-		
-	}
-	*/
-	
-	$sql = "SELECT id, name FROM category ORDER BY name;";
-	$sth = $dbh->query($sql);
-	$num_db_categories = $sth->rowCount();
-
-
 	function getCategoryPackageNames($str_category_name) {
 
 		$obj_portage_category = new PortageCategory($str_category_name);
@@ -132,31 +55,6 @@
 		return $arr_package_names;
 		
 	}
-
-	$arr_db_category = $sth->fetch();
-
-	$arr_package_names = getCategoryPackageNames($arr_db_category['name']);
-
-	// This would usually be a foreach loop
-	$str_package_name = current($arr_package_names);
-
-	// Check to see if the package is already in the database
-	// These three lines would be outside the for loop, because you only set it once.
-	// README.php: It's logical to use bindParam() if you are going to run a LOT of queries with the same
-	// variable names.  But, if you are just running something once, and want to use a prepared
-	// statement, then bindValue() makes more sense.
-	// bindParam() is just a nice shortcut, because all you have to do is change the variable values (instead
-	// of bindValue() where you would re-run the code).  So, bindParam() once or bindValue() multiple times. :)
-	$stmt = $dbh->prepare("SELECT id FROM package WHERE category = :category AND name = :name");
-	$stmt->bindParam(':category', $arr_db_category['id']);
-	$stmt->bindParam(':name', $str_package_name);
-	
-	// This line would execute the query, using the variables that are set by $arr_db_category
-	// and this would be inside the for loop.
-	$stmt->execute();
-	// So would this, since we're returning just this result
-	// README.php : If there is ZERO rows returned, then the result will be FALSE
-	$db_package_id = $stmt->fetchColumn();
 
 	/*
 	 * Insert a 'package' record
@@ -261,7 +159,7 @@
 
 		if($int_db_category_id === false) {
 			echo "category $str_category_name is not imported";
-			break;
+			return false;
 		}
 
 		// Insert package
@@ -353,139 +251,97 @@
 		}
 	}
 
-
-	if($db_package_id === false) {
-		import_package($arr_db_category['name'], $str_package_name);
+	// Verify that categories are imported
+	$sql = "SELECT COUNT(1) FROM category;";
+	$sth = $dbh->query($sql);
+	$num_db_categories = $sth->fetchColumn();
+	if($num_db_categories === 0) {
+		die("There are no categories in the database.  Import those before importing packages.\n");
+		exit;
 	}
 
-
-	while($arr = $sth->fetch()) {
-
-		print_r($arr);
-
+	// Reset sequence if table is empty
+	$sql = "SELECT COUNT(1) FROM package;";
+	$sth = $dbh->query($sql);
+	$num_db_packages = $sth->fetchColumn();
+	if($num_db_packages === 0) {
+		$sql = "ALTER SEQUENCE package_id_seq RESTART WITH 1;";
+		$dbh->exec($sql);
 	}
-	echo $num_db_categories;
+	
+	
+	$sql = "SELECT name FROM category ORDER BY name;";
+	$sth = $dbh->query($sql);
+	$num_db_categories = $sth->rowCount();
+
+	while($str_category_name = $sth->fetchColumn()) {
+
+		$arr_package_names = getCategoryPackageNames($str_category_name);
+
+		foreach($arr_package_names as $str_package_name) {
+
+			echo "Importing category: $str_category_name package: $str_package_name";
+			echo "\n";
+
+			import_package($str_category_name, $str_package_name);
+		}
+		
+	}
+
 	die;
 
 	
-	// FIXME: REMOVE Massive query: 16k rows
-	$sql = "SELECT category, package, category_name, package_name FROM view_package;";
-	$arr = $db->getAll($sql);
-	foreach($arr as $row) {
-		$arr_package_ids[$row['category_name']][$row['package_name']] = $row['package'];
-	}
-
-	$num_categories = count($arr_categories);
-	$counter_categories = 1;
-
-	echo "importing category packages\n";
+	/**
+	 * Migrate to update / remove
+	 */
+	/*
+	if($num_db_packages === 0 || $debug)
+		$all = true;
+	else {
 	
-	foreach($arr_categories as $category_id => $category_name) {
+		$sql = "SELECT MAX(portage_mtime) FROM package;";
+		$sth = $dbh->query($sql);
+		$max_portage_mtime = $sth->fetchColumn();
 
-		$c = new PortageCategory($category_name);
-		$arr_packages = $c->getPackages();
-
-		$num_packages = count($arr_packages);
-		$counter_categories = str_pad($counter_categories, strlen($num_categories), 0, STR_PAD_LEFT);
-
-		echo "[$counter_categories/$num_categories] $category_name ($num_packages)\n";
-		$counter_categories++;
-		
-		// FIXME: REMOVE This is also going to be a LARGE query
-		$arr_diff = importDiff('package', $arr_packages, "category = $category_id");
-		
-		// FIXME Flag to be deleted, execute later
-		// This is dangerous to delete right now because 1) it will take a *long* time, and
-		// 2) you're breaking the whole "snapshot" approach.
-		if(count($arr_diff['delete'])) {
-			foreach($arr_diff['delete'] as $package_name) {
-				$sql = "DELETE FROM package WHERE name = ".$db->quote($package_name)." AND category = $category_id;";
-				$db->query($sql);
-			}
-		}
-		
-		if(count($arr_diff['insert'])) {
-		
-			foreach($arr_diff['insert'] as $package_name) {
-			
-				$p = new PortagePackage($category_name, $package_name);
-				$ch = new PackageChangelog($category_name, $package_name);
-				$ma = new PackageManifest($category_name, $package_name);
-			
- 				$arr_insert = array(
- 					'category' => $category_id,
- 					'name' => $package_name,
- 					'portage_mtime' => $p->portage_mtime,
- 				);
-				$db->autoExecute('package', $arr_insert, MDB2_AUTOQUERY_INSERT);
-				
-				$package_id = $db->lastInsertID();
-				
-				// New changelog entry
-				$arr_insert = array(
-					'package' => $package_id,
-					'changelog' => $ch->changelog,
-					'mtime' => $ch->mtime,
-					'hash' => $ch->hash,
-					'filesize' => $ch->filesize,
-					'recent_changes' => $ch->recent_changes,
-				);
-				
-				$db->autoExecute('package_changelog', $arr_insert, MDB2_AUTOQUERY_INSERT);
-				
-				// New Manifest entry
-				$arr_insert = array(
-					'package' => $package_id,
-					'manifest' => $ma->manifest,
-					'mtime' => $ma->mtime,
-					'hash' => $ma->hash,
-					'filesize' => $ma->filesize,
-				);
-				
-				$db->autoExecute('package_manifest', $arr_insert, MDB2_AUTOQUERY_INSERT);
-				
-				// Import package files
-				$arr = $ma->getDistfiles();
-				
-				foreach($arr as $filename) {
-				
-					$arr_insert = array(
-						'package' => $package_id,
-						'filename' => $filename,
-						'type' => 'DIST',
-						'hash' => $ma->getHash($filename),
-						'filesize' => $ma->getFilesize($filename),
-					);
-					
-					$db->autoExecute('package_files', $arr_insert, MDB2_AUTOQUERY_INSERT);
-				
-				}
-				
-				// Import patches
-				$arr = $ma->getFiles();
-				
-				foreach($arr as $filename) {
-				
-					$arr_insert = array(
-						'package' => $package_id,
-						'filename' => $filename,
-						'type' => 'AUX',
-						'hash' => $ma->getHash($filename),
-						'filesize' => $ma->getFilesize($filename),
-					);
-					
-					$db->autoExecute('package_files', $arr_insert, MDB2_AUTOQUERY_INSERT);
-				
-				}
-				
-			}
-		}
+		if(is_null($max_portage_mtime))
+			$all = true;
+	
 	}
 	
-	unset($c, $p, $ch, $ma, $arr_insert, $arr_diff, $arr_packages, $arr_categories, $categories, $package_id, $arr, $filename);
+	if(!$all) {
 	
-	$count = 0;
+		$categories = $tree->getCategories();
 	
+		$tmp = tempnam('/tmp', 'znurt');
+		touch($tmp, $max_portage_mtime);
+		
+		$arr = array();
+		
+		$dir = $tree->getTree();
+		
+		foreach($categories as $category_name) {
+			
+			$category_dir = $dir."/".$category_name;
+			
+			$exec = "find $category_dir -mindepth 1 -maxdepth 1 -type d -newer $tmp";
+			$arr = array_merge($arr, shell::cmd($exec));
+		}
+		unlink($tmp);
+		
+		$count = 0;
+		
+		foreach($arr as $name) {
+		
+			$name = str_replace($dir."/", "", $name);
+			$tmp = explode("/", $name);
+			$arr_update[$tmp[0]][] = $tmp[1];
+			
+			$count++;
+		
+		}
+		
+	}
+
 	foreach($arr_update as $category_name => $arr_packages) {
 	
 		foreach($arr_packages as $package_name) {
@@ -540,7 +396,5 @@
 			}
 		}
 	}
-	
-	unset($arr_update, $category_name, $arr_packages, $package_id, $arr_package_ids, $db_package);
-	
+	*/
 ?>
