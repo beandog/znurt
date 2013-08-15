@@ -13,6 +13,7 @@
 	
 	// Run with -cron arg to go quietly into the night.
 	// No code in here to do emerge --sync.  Runs separately.
+	$cron = false;
 	if(in_array("-cron", $argv)) {
 		$verbose = false;
 		$cron = true;
