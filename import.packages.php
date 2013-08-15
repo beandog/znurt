@@ -73,7 +73,6 @@
 		$bool = $stmt->execute();
 
 		if($bool === false) {
-			print_r($stmt->errorInfo());
 			return false;
 		} else {
 			$int_db_package_id = $dbh->lastInsertID('package_id_seq');
