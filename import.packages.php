@@ -269,7 +269,6 @@
 		$dbh->exec($sql);
 	}
 	
-	
 	$sql = "SELECT name FROM category ORDER BY name;";
 	$sth = $dbh->query($sql);
 	$num_db_categories = $sth->rowCount();
@@ -284,6 +283,9 @@
 			echo "\n";
 
 			import_package($str_category_name, $str_package_name);
+
+			if($development)
+				die;
 		}
 		
 	}
