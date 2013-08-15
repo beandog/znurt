@@ -287,6 +287,12 @@
 			$stmt->execute();
 			$row_count = $stmt->fetchColumn();
 
+			var_dump($str_category_name);
+			var_dump($str_package_name);
+			var_dump($row_count);
+
+			die;
+
 			if(!$row_count) {
 				import_package($str_category_name, $str_package_name);
 			}
