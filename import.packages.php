@@ -68,7 +68,7 @@
 		$stmt = $dbh->prepare("INSERT INTO package (category, name, portage_mtime) VALUES (:category, :name, :portage_mtime);");
 		$stmt->bindValue(':category', $arr_package['category']);
 		$stmt->bindValue(':name', $arr_package['name']);
-		$stmt->bindValue(':portage_mtime', $arr_package['portage_mtime']);
+		$stmt->bindValue(':portage_mtime', $arr_package['mtime']);
 
 		$boot = $stmt->execute();
 
