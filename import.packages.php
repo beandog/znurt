@@ -163,6 +163,7 @@
 
 		// Insert package
 		$obj_portage_package = new PortagePackage($str_category_name, $str_package_name);
+
 		$int_portage_mtime = $obj_portage_package->portage_mtime;
 		$arr_package = array(
 			'category' => $int_db_category_id,
@@ -215,7 +216,6 @@
 			$bool = $stmt->execute();
 
 			if($bool === false) {
-				print_r($stmt->errorInfo());
 				$int_db_package_file_id = null;
 			} else {
 				$int_db_package_file_id = $dbh->lastInsertID('package_files_id_seq');
@@ -271,31 +271,28 @@
 	$sth = $dbh->query($sql);
 	$num_db_categories = $sth->rowCount();
 
+	$count = 0;
+
 	while($str_category_name = $sth->fetchColumn()) {
 
 		$arr_package_names = getCategoryPackageNames($str_category_name);
 
 		foreach($arr_package_names as $str_package_name) {
 
-			echo "Importing category: $str_category_name package: $str_package_name";
-			echo "\n";
 
 			// Check for existing record
-			$stmt = $dbh->prepare("SELECT COUNT(1) FROM package LEFT JOIN category ON category.name=:category AND package.name=:package;");
+			$stmt = $dbh->prepare("SELECT COUNT(1) FROM package JOIN category ON category.name=:category AND package.name=:package;");
 			$stmt->bindValue('category', $str_category_name, PDO::PARAM_STR);
 			$stmt->bindValue('package', $str_package_name, PDO::PARAM_STR);
 			$stmt->execute();
 			$row_count = $stmt->fetchColumn();
 
-			var_dump($str_category_name);
-			var_dump($str_package_name);
-			var_dump($row_count);
-
-			die;
-
 			if(!$row_count) {
+				echo "Importing category: $str_category_name package: $str_package_name\n";
 				import_package($str_category_name, $str_package_name);
 			}
+
+
 
 		}
 		
