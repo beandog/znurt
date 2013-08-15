@@ -164,7 +164,7 @@
 
 		// Insert package
 		$obj_portage_package = new PortagePackage($str_category_name, $str_package_name);
-		$int_portage_mtime =& $obj_portage_package->portage_mtime;
+		$int_portage_mtime = $obj_portage_package->portage_mtime;
 		$arr_package = array(
 			'category' => $int_db_category_id,
 			'name' => $str_package_name,
