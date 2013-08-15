@@ -15,6 +15,7 @@
 	// Can be overriden in 'header.config.php', which is not part of git
 	$verbose = true;
 	$debug = false;
+	$development = false;
 
 	@include 'header.config.php';
 
