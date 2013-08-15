@@ -2,6 +2,9 @@
 
 	error_reporting(E_ALL & ~E_DEPRECATED);
 
+	// Define empty variables, can be overriden
+	$include_path = '';
+
 	// Include MDB2 credentials
 	// See header.mdb2.php for generic connection settings
 	// See header.dsn.php for specific connection settings for your system
