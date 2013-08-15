@@ -209,7 +209,6 @@
 				'filesize' => $obj_package_manifest->getFilesize($str_package_distfilename),
 			);
 
-
 			foreach($arr_insert as $key => $value)
 				$stmt->bindValue(":$key", $value);
 
@@ -281,10 +280,17 @@
 			echo "Importing category: $str_category_name package: $str_package_name";
 			echo "\n";
 
-			import_package($str_category_name, $str_package_name);
+			// Check for existing record
+			$stmt = $dbh->prepare("SELECT COUNT(1) FROM package LEFT JOIN category ON category.name=:category AND package.name=:package;");
+			$stmt->bindValue('category', $str_category_name, PDO::PARAM_STR);
+			$stmt->bindValue('package', $str_package_name, PDO::PARAM_STR);
+			$stmt->execute();
+			$row_count = $stmt->fetchColumn();
 
-			if($development)
-				die;
+			if(!$row_count) {
+				import_package($str_category_name, $str_package_name);
+			}
+
 		}
 		
 	}
