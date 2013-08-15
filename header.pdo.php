@@ -5,7 +5,7 @@
 	 */
 
 	// Specific connection settings
-	require_once 'header.dsn.php';
+	@include_once 'header.dsn.php';
 
 	try {
 		$dbh = new PDO($pdo_dsn);
