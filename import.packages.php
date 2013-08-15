@@ -70,7 +70,7 @@
 		$stmt->bindValue(':name', $arr_package['name']);
 		$stmt->bindValue(':portage_mtime', $arr_package['mtime']);
 
-		$boot = $stmt->execute();
+		$bool = $stmt->execute();
 
 		if($bool === false) {
 			print_r($stmt->errorInfo());
