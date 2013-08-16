@@ -93,7 +93,7 @@
 				$this->portage_mtime = filemtime($dir);
 			}
 			
-			if(file_exists($this->package_dir."/ChangeLog")) {
+			if($this->hasChangelog()) {
 				$this->changelog_filename = $this->package_dir."/ChangeLog";
 			}
 			
@@ -247,6 +247,13 @@
 			ksort($arr);
 			return $arr;
 		
+		}
+
+		public function hasChangelog() {
+
+			$bool = file_exists($this->package_dir."/ChangeLog");
+			return $bool;
+
 		}
 		
 	}
