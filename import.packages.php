@@ -276,6 +276,9 @@
 	while($str_category_name = $sth->fetchColumn()) {
 
 		$arr_package_names = getCategoryPackageNames($str_category_name);
+		$num_category_packages = count($arr_package_names);
+
+		echo "[import.packages.php] category: $str_category_name ($num_category_packages packages):";
 
 		foreach($arr_package_names as $str_package_name) {
 
@@ -288,13 +291,13 @@
 			$row_count = $stmt->fetchColumn();
 
 			if(!$row_count) {
-				echo "Importing category: $str_category_name package: $str_package_name\n";
+				echo " $str_package_name";
 				import_package($str_category_name, $str_package_name);
 			}
 
-
-
 		}
+
+		echo "\n";
 		
 	}
 
