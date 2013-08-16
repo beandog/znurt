@@ -15,14 +15,16 @@
 		private $changelog;
 		private $hash;
 		private $filesize;
+		private $file_exists;
 		
 		public function __construct($category = null, $package = null, $tree = "/usr/portage") {
 		
 			global $hits;
 			@$hits['changelog']++;
 			
-			if($category && $package && $tree)
+			if($category && $package && $tree) {
 				$this->setPackage($category, $package, $tree);
+			}
 		
 		}
 		
@@ -81,7 +83,10 @@
 			}
 			
 			if(file_exists($this->dir."/ChangeLog")) {
+				$this->file_exists = true;
 				$this->filename = $this->dir."/ChangeLog";
+			} else {
+				$this->file_exists = false;
 			}
 		
 		}
@@ -115,9 +120,14 @@
 		
 			$pattern_date = "/^\d{1,2}\s\w{3}\s\d{4}/";
 // 			$pattern_dev = "/<\w+@gentoo\.org>/";
+
+			$changelog = $this->getChangelog();
+			$changelog = trim($changelog);
+
+			if(!strlen($changelog))
+				return '';
 		
- 			$arr = explode("\n", $this->getChangelog());
-//   			print_r($arr);
+ 			$arr = explode("\n", $changelog);
 			
 			// Cut off the header
  			$arr = array_slice($arr, 4);
