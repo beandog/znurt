@@ -274,17 +274,14 @@
 	$sth = $dbh->query($sql);
 	$num_db_categories = $sth->rowCount();
 
-	$count = 0;
-
+	// Get a list of packages to import
+	$arr_new_packages = array();
 	while($str_category_name = $sth->fetchColumn()) {
 
 		$arr_package_names = getCategoryPackageNames($str_category_name);
 		$num_category_packages = count($arr_package_names);
 
-		echo "[import.packages.php] category: $str_category_name ($num_category_packages packages):";
-
 		foreach($arr_package_names as $str_package_name) {
-
 
 			// Check for existing record
 			$stmt = $dbh->prepare("SELECT COUNT(1) FROM package JOIN category ON category.name=:category AND package.name=:package;");
@@ -294,19 +291,24 @@
 			$row_count = $stmt->fetchColumn();
 
 			if(!$row_count) {
-				echo " $str_package_name";
-				import_package($str_category_name, $str_package_name);
+				$arr_new_packages[] = array(
+					'category' => $str_category_name,
+					'package' => $str_package_name,
+				);
 			}
 
 		}
 
-		echo "\n";
 		
 	}
 
-	die;
+	// Insert new packages
+	if(count($arr_new_packages)) {
+		foreach($arr_new_packages as $arr) {
+			 import_package($arr['category'], $arr['package']);
+		}
+	}
 
-	
 	/**
 	 * Migrate to update / remove
 	 */
