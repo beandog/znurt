@@ -173,15 +173,18 @@
 		$int_db_package_id = insert_package($arr_package);
 
 		// Insert package changelog
-		$obj_package_changelog = new PackageChangelog($str_category_name, $str_package_name);
-		$arr_package_changelog = array(
-			'package' => $int_db_package_id,
-			'changelog' => $obj_package_changelog->changelog,
-			'mtime' => $obj_package_changelog->mtime,
-			'filesize' => $obj_package_changelog->filesize,
-			'recent_changes' => $obj_package_changelog->recent_changes,
-		);
-		$int_db_package_changelog_id = insert_package_changelog($arr_package_changelog);
+		// FIXME Register as an anomaly if there's no Changelog (bad sync?)
+		if($obj_portage_package->hasChangelog()) {
+			$obj_package_changelog = new PackageChangelog($str_category_name, $str_package_name);
+			$arr_package_changelog = array(
+				'package' => $int_db_package_id,
+				'changelog' => $obj_package_changelog->changelog,
+				'mtime' => $obj_package_changelog->mtime,
+				'filesize' => $obj_package_changelog->filesize,
+				'recent_changes' => $obj_package_changelog->recent_changes,
+			);
+			$int_db_package_changelog_id = insert_package_changelog($arr_package_changelog);
+		}
 
 		// Insert package manifest 
 		// FIXME: Fetching 'manifest' from object is broken
