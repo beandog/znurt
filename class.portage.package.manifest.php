@@ -75,21 +75,27 @@
 				}
 		
 				$contents = file($this->filename);
+				$metadata = preg_grep('/^(AUX|DIST|EBUILD|MISC)/', $contents);
 				
-				foreach($contents as $line) {
+				foreach($metadata as $line) {
+
 					$arr = explode(" ", $line);
-					
-					if(in_array($arr[0], $arr_types)) {
-					
-						$this->arr_files[$arr[1]] = $this->arr_entries[$arr[0]][$arr[1]] = array(
-							'filesize' => $arr[2],
-							'rmd160' => $arr[4],
-							'sha1' => $arr[6],
-							'sha256' => $arr[8],
-						);
-					}
+
+					// DIST has only SHA256 sum
+					// AUX, EBUILD and MISC also contain SHA512 and Whirlpool
+					// For here, only look at sha256.
+					$filetype = $arr[0];
+					$filename = $arr[1];
+					$filesize = $arr[2];
+					$sha256 = $arr[4];
+
+					$this->arr_files[$filename] = $this->arr_entries[$filetype][$filename] = array(
+						'filesize' => $filesize,
+						'sha256' => $sha256,
+					);
 					
 				}
+
 			}
 			
 		}
@@ -133,7 +139,7 @@
 		}
 		
 		
-		public function getHash($file = 'Manifest', $type = 'sha1') {
+		public function getHash($file = 'Manifest', $type = 'sha256') {
 		
 			// FIXME This is really dumb.
 			if($file == 'Manifest') {
