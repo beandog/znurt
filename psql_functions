@@ -1,11 +1,11 @@
-CREATE OR REPLACE FUNCTION package_id(atom varchar, OUT id integer) AS $$
+CREATE OR REPLACE FUNCTION package_id(atom varchar, OUT i integer) AS $$
 DECLARE
         c varchar;
         p varchar;
 BEGIN
         c := category_name(atom);
         p := package_name(atom);
-        id := id FROM package WHERE category = c AND name = p;
+        i := id FROM package WHERE category = c AND name = p;
 END;
 $$ language plpgsql;
 
