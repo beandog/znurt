@@ -1,9 +1,9 @@
 CREATE OR REPLACE FUNCTION package_id(atom varchar, OUT i integer) AS $$
 DECLARE
-        c varchar;
+        c integer;
         p varchar;
 BEGIN
-        c := category_name(atom);
+        c := category_id(atom);
         p := package_name(atom);
         i := id FROM package WHERE category = c AND name = p;
 END;
