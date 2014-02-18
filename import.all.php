@@ -41,7 +41,7 @@
 	$arr_import['base'] = array('arches', 'licenses');
 	$arr_import['packages'] = array('categories', 'packages', 'bugzilla');
 	$arr_import['ebuilds'] = array('ebuilds');
-	$arr_import['metadata'] = array('ebuild_metadata', 'ebuild_arch', 'ebuild_homepage', 'ebuild_license', 'package_mask', 'ebuild_mask', 'ebuild_ev', 'use_global', 'use_local', 'use_expand', 'ebuild_use', 'ebuild_depend');
+	$arr_import['metadata'] = array('ebuild_metadata', 'ebuild_arch', 'ebuild_homepage', 'ebuild_license', 'package_mask', 'ebuild_mask', 'ebuild_ev', 'use_global', 'use_local', 'use_expand', 'ebuild_use');
 	$arr_import['final'] = array('final');
 
 	// FIXME updating the website with our import status would be nice.
