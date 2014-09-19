@@ -1,4 +1,4 @@
-<?
+<?php
 	/**
 	 * A set of common functions
 	 *
@@ -9,10 +9,10 @@
 	 * @package Admin
 	 */
 	class Common {
-	
+
 		var $html;
 		var $id;
-		
+
 		function Common() {
 			$this->state_name = array("Alabama","Alaska","Arizona","Arkansas","California","Colorado","Connecticut","Delaware","District Of Columbia","Florida","Georgia","Hawaii","Idaho","Illinois","Indiana","Iowa","Kansas","Kentucky","Louisiana","Maine","Maryland","Massachusetts","Michigan","Minnesota","Mississippi","Missouri","Montana","Nebraska","Nevada","New Hampshire","New Jersey","New Mexico","New York","North Carolina","North Dakota","Ohio","Oklahoma","Oregon","Pennsylvania","Rhode Island","South Carolina","South Dakota","Tennessee","Texas","Utah","Vermont","Virgin Islands","Virginia","Washington","West Virginia","Wisconsin","Wyoming");
 			$this->state_code = array('AL','AK','AZ','AR','CA','CO','CT','DE','DC','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','ND','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VI','VA','WA','WV','WI','WY');
@@ -33,7 +33,7 @@
 				$amount .= ".00";
 			return($amount);
 		}
-		
+
 		function selectForm($array = false, $field_name = 'select', $default = false, $class = '', $blank_header = false) {
 			$this->html = "<select name='$field_name' class='$class'>\n";
 			if($blank_header) {
@@ -49,8 +49,8 @@
 			#print_r($array);
 			return($this->html);
 		}
-		
-		
+
+
 		/**
 		 * print_r() formatted nicely
 		 *
@@ -71,7 +71,7 @@
 			else {
 				$var = htmlentities($var);
 				print_r($var);
-			}	
+			}
 			echo "</pre>\n";
 		}
 
@@ -89,7 +89,7 @@
 				$phone = substr($phone,0,3)."-".substr($phone,3,4);
 			return $phone;
 		}
-		
+
 		/**
 		 * insertNull()
 		 *
@@ -112,7 +112,7 @@
 			else
 				return "'".pg_escape_string($str)."'";
 		}
-  
+
   		/**
 		 * Creates a mailto: href
 		 *
@@ -130,7 +130,7 @@
 				$email="<a href='mailto:$email' class='$class'>$email</a>";
 			return $email;
 		}
-		
+
 		/**
 		 * Standardizes display format display for clients
 		 *
@@ -147,7 +147,7 @@
 				return($date);
 			}
 		}
-	
+
 		/**
 		 * Creates a select menu from a recordset
 		 *
@@ -161,20 +161,20 @@
 		 * @param string $first_option_text new option at the top
 		 */
 		function selectRecordset($rs, $select_name = 'select', $option_value_id = 0, $option_string_id = 1, $default = null, $display_blank_option = false,  $first_option_value = 0, $first_option_text = '') {
-		
+
 			if(!is_numeric($option_value_id) || !is_numeric($option_string_id))
 				return 0;
-		
+
 			$html = "<select name='$select_name'>\n";
-			
+
 			// If they want a blank starter, display it
 			if($display_blank_option === true)
 				$html .= "<option value=''></option>\n";
-			
+
 			// See if they need a first row
 			if(!empty($first_option_text))
 				$html .= "<option value='$first_option_value'>$first_option_text</option>\n";
-	
+
 			while($arr = mssql_fetch_row($rs)) {
 				if(!is_null($default) && $arr[$option_value_id] == $default)
 					$selected = ' selected';
@@ -182,12 +182,12 @@
 					$selected = '';
 				$html .= "<option value='{$arr[$option_value_id]}'$selected>{$arr[$option_string_id]}</option>\n";
 			}
-			
+
 			$html .= "</select>\n";
-			
+
 			return $html;
 		}
-		
+
 		/**
 		 * Creates a <select> menu of states
 		 *
@@ -220,7 +220,7 @@
 		function addMonths($date, $months) {
 			return strtotime("$months month $date");
 		}
-		
+
 		/**
 		 * Add a few days using PEAR's Date class
 		 * @param string $date
@@ -242,7 +242,7 @@
 			}
 			return date("Y-m-d",strtotime($old->getDate()));
 		}
-		
+
 		/**
 		 * Adds hours
 		 *
@@ -349,7 +349,7 @@
 			// strip html and trim whitespaces
 			$fmt = strip_tags($fmt);
 			$fmt = trim($fmt);
-			
+
 			// Correct case on address, name, city and business
 			if($type == 'address' || $type == 'name' || $type == 'city' || $type == 'business')
 				$fmt = ucwords(strtolower($fmt));
@@ -424,10 +424,10 @@
 				case "phone":
 					#$fmt = preg_replace("/[^0-9]/", "", $fmt);
 					$fmt = preg_replace("/\D/", "", $fmt);
-					
+
 					if(empty($fmt))
 						return null;
-					
+
 					$strlen = strlen($fmt);
 					if(($strlen > 7 && $strlen < 10) || $strlen < 7 || $strlen > 11)
 						$fmt = null;
@@ -457,7 +457,7 @@
 				case "date":
 					if(!empty($fmt))
 						$fmt = strtotime($fmt);
-					
+
 					if(empty($fmt) || ($fmt) == -1)
 						$fmt = null;
 					else
@@ -472,7 +472,7 @@
 				case "year":
 					if(is_numeric($fmt))
 						$fmt = intval($fmt);
-					if(strlen($fmt) != 4) {	
+					if(strlen($fmt) != 4) {
 						if(strlen($fmt) == 2 && $fmt < 50)
 							$fmt = "20$fmt";
 						elseif(strlen($fmt) == 1 && $fmt < 50)
@@ -495,7 +495,7 @@
 			$fmt = trim($fmt);
 			return($fmt);
 		}
-	
+
 		/**
 		 * Cleanly displays a td with border if the value is blank
 		 *
@@ -525,22 +525,22 @@
 			else
 				return '';
 		}
-		
+
 		function selectChecked($value = 0, $checked = null) {
 			if($value == $checked)
 				return ' checked ';
 			else
 				return '';
 		}
-		
+
 		function getRowColor($i = 0) {
 			$i = intval($i);
-			
+
 			if(($i % 2) == 0)
 				return '#ffffff';
 			else
 				return '#f5f4f3';
 		}
 	};
-	
+
 ?>
