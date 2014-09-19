@@ -3,33 +3,24 @@
 --
 
 SET statement_timeout = 0;
+SET lock_timeout = 0;
 SET client_encoding = 'UTF8';
-SET standard_conforming_strings = off;
+SET standard_conforming_strings = on;
 SET check_function_bodies = false;
 SET client_min_messages = warning;
-SET escape_string_warning = off;
 
 --
--- Name: portage; Type: DATABASE; Schema: -; Owner: -
+-- Name: plpgsql; Type: EXTENSION; Schema: -; Owner: -
 --
 
-CREATE DATABASE portage WITH TEMPLATE = template0 ENCODING = 'UTF8' LC_COLLATE = 'en_US.UTF-8' LC_CTYPE = 'en_US.UTF-8';
+CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;
 
-
-\connect portage
-
-SET statement_timeout = 0;
-SET client_encoding = 'UTF8';
-SET standard_conforming_strings = off;
-SET check_function_bodies = false;
-SET client_min_messages = warning;
-SET escape_string_warning = off;
 
 --
--- Name: plpgsql; Type: PROCEDURAL LANGUAGE; Schema: -; Owner: -
+-- Name: EXTENSION plpgsql; Type: COMMENT; Schema: -; Owner: -
 --
 
-CREATE OR REPLACE PROCEDURAL LANGUAGE plpgsql;
+COMMENT ON EXTENSION plpgsql IS 'PL/pgSQL procedural language';
 
 
 SET search_path = public, pg_catalog;
@@ -84,16 +75,40 @@ $$;
 -- Name: package_id(character varying); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION package_id(atom character varying, OUT id integer) RETURNS integer
+CREATE FUNCTION package_id(atom character varying, OUT i integer) RETURNS integer
     LANGUAGE plpgsql
     AS $$
 DECLARE
-        c varchar;
+        c integer;
         p varchar;
-BEGIN  
-        c := category_name(atom);
+BEGIN
+        c := category_id(atom);
         p := package_name(atom);
-        id := package_id(c, p);
+        i := id FROM package WHERE category = c AND name = p;
+END;
+$$;
+
+
+--
+-- Name: package_id(integer); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION package_id(ebuild_id integer, OUT id integer) RETURNS integer
+    LANGUAGE sql
+    AS $_$ SELECT package FROM ebuild WHERE id = $1 $_$;
+
+
+--
+-- Name: package_id2(character varying); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION package_id2(atom character varying, OUT i integer) RETURNS integer
+    LANGUAGE plpgsql
+    AS $$
+        DECLARE p varchar;
+BEGIN
+        p := package_name(atom);
+        i := id FROM package WHERE name = p;
 END;
 $$;
 
@@ -446,7 +461,34 @@ COMMENT ON COLUMN package.status IS 'normal, portage_mtime changed';
 --
 
 CREATE VIEW ebuilds AS
-    SELECT e.id, c.name AS category_name, c.id AS category, p.name AS package_name, e.package, e.pf, e.pv, e.pr, e.pvr, e.alpha, e.beta, e.pre, e.rc, e.p, e.slot, e.version, e.ev, e.lvl, e.cache_mtime, e.idate, (em.ebuild IS NOT NULL) AS masked, e.udate FROM (((ebuild e JOIN package p ON ((e.package = p.id))) JOIN category c ON ((c.id = p.category))) LEFT JOIN ebuild_mask em ON (((e.id = em.ebuild) AND (em.status = 0)))) WHERE (e.status = ANY (ARRAY[0, 2])) ORDER BY c.name, p.name, e.ev DESC, e.lvl DESC, (e.p IS NULL), e.p DESC, (e.rc IS NULL), e.rc DESC, (e.pre IS NULL), e.pre DESC, (e.beta IS NULL), e.beta DESC, (e.alpha IS NULL), e.alpha DESC, (e.pr IS NULL), e.pr DESC;
+ SELECT e.id,
+    c.name AS category_name,
+    c.id AS category,
+    p.name AS package_name,
+    e.package,
+    e.pf,
+    e.pv,
+    e.pr,
+    e.pvr,
+    e.alpha,
+    e.beta,
+    e.pre,
+    e.rc,
+    e.p,
+    e.slot,
+    e.version,
+    e.ev,
+    e.lvl,
+    e.cache_mtime,
+    e.idate,
+    (em.ebuild IS NOT NULL) AS masked,
+    e.udate
+   FROM (((ebuild e
+   JOIN package p ON ((e.package = p.id)))
+   JOIN category c ON ((c.id = p.category)))
+   LEFT JOIN ebuild_mask em ON (((e.id = em.ebuild) AND (em.status = 0))))
+  WHERE (e.status = ANY (ARRAY[0, 2]))
+  ORDER BY c.name, p.name, e.ev DESC, e.lvl DESC, (e.p IS NULL), e.p DESC, (e.rc IS NULL), e.rc DESC, (e.pre IS NULL), e.pre DESC, (e.beta IS NULL), e.beta DESC, (e.alpha IS NULL), e.alpha DESC, (e.pr IS NULL), e.pr DESC;
 
 
 --
@@ -594,7 +636,17 @@ CREATE TABLE meta (
 --
 
 CREATE VIEW missing_arch AS
-    SELECT e.id AS ebuild, c.name AS category_name, p.name AS package_name, e.pf, em.value AS metadata FROM ((((category c JOIN package p ON ((p.category = c.id))) JOIN ebuild e ON ((e.package = p.id))) LEFT JOIN ebuild_arch ea ON ((ea.ebuild = e.id))) LEFT JOIN ebuild_metadata em ON (((em.ebuild = e.id) AND ((em.keyword)::text = 'keywords'::text)))) WHERE ((ea.ebuild IS NULL) AND (em.value <> ''::text));
+ SELECT e.id AS ebuild,
+    c.name AS category_name,
+    p.name AS package_name,
+    e.pf,
+    em.value AS metadata
+   FROM ((((category c
+   JOIN package p ON ((p.category = c.id)))
+   JOIN ebuild e ON ((e.package = p.id)))
+   LEFT JOIN ebuild_arch ea ON ((ea.ebuild = e.id)))
+   LEFT JOIN ebuild_metadata em ON (((em.ebuild = e.id) AND ((em.keyword)::text = 'keywords'::text))))
+  WHERE ((ea.ebuild IS NULL) AND (em.value <> ''::text));
 
 
 --
@@ -602,7 +654,17 @@ CREATE VIEW missing_arch AS
 --
 
 CREATE VIEW missing_depend AS
-    SELECT e.id, c.name AS category_name, p.name AS package_name, em.keyword AS type, em.value AS metadata FROM ((((category c JOIN package p ON ((c.id = p.category))) JOIN ebuild e ON ((e.package = p.id))) LEFT JOIN ebuild_depend ed ON ((ed.ebuild = e.id))) LEFT JOIN ebuild_metadata em ON (((em.ebuild = e.id) AND ((em.keyword)::text = ANY (ARRAY[('depend'::character varying)::text, ('rdepend'::character varying)::text]))))) WHERE ((ed.ebuild IS NULL) AND (em.value <> ''::text));
+ SELECT e.id,
+    c.name AS category_name,
+    p.name AS package_name,
+    em.keyword AS type,
+    em.value AS metadata
+   FROM ((((category c
+   JOIN package p ON ((c.id = p.category)))
+   JOIN ebuild e ON ((e.package = p.id)))
+   LEFT JOIN ebuild_depend ed ON ((ed.ebuild = e.id)))
+   LEFT JOIN ebuild_metadata em ON (((em.ebuild = e.id) AND ((em.keyword)::text = ANY (ARRAY[('depend'::character varying)::text, ('rdepend'::character varying)::text])))))
+  WHERE ((ed.ebuild IS NULL) AND (em.value <> ''::text));
 
 
 --
@@ -610,7 +672,13 @@ CREATE VIEW missing_depend AS
 --
 
 CREATE VIEW missing_ev AS
-    SELECT DISTINCT e1.package, e2.id AS ebuild, e2.version FROM (ebuild e1 LEFT JOIN ebuild e2 ON ((e2.package = e1.package))) WHERE ((e1.status = 2) OR ((e1.ev)::text = ''::text)) ORDER BY e1.package;
+ SELECT DISTINCT e1.package,
+    e2.id AS ebuild,
+    e2.version
+   FROM (ebuild e1
+   LEFT JOIN ebuild e2 ON ((e2.package = e1.package)))
+  WHERE ((e1.status = 2) OR ((e1.ev)::text = ''::text))
+  ORDER BY e1.package;
 
 
 --
@@ -618,7 +686,17 @@ CREATE VIEW missing_ev AS
 --
 
 CREATE VIEW missing_homepage AS
-    SELECT e.id AS ebuild, c.name AS category_name, p.name AS package_name, e.pf, em.value AS metadata FROM ((((category c JOIN package p ON ((p.category = c.id))) JOIN ebuild e ON ((e.package = p.id))) LEFT JOIN ebuild_homepage eh ON ((eh.ebuild = e.id))) LEFT JOIN ebuild_metadata em ON (((em.ebuild = e.id) AND ((em.keyword)::text = 'homepage'::text)))) WHERE ((eh.ebuild IS NULL) AND (em.value <> ''::text));
+ SELECT e.id AS ebuild,
+    c.name AS category_name,
+    p.name AS package_name,
+    e.pf,
+    em.value AS metadata
+   FROM ((((category c
+   JOIN package p ON ((p.category = c.id)))
+   JOIN ebuild e ON ((e.package = p.id)))
+   LEFT JOIN ebuild_homepage eh ON ((eh.ebuild = e.id)))
+   LEFT JOIN ebuild_metadata em ON (((em.ebuild = e.id) AND ((em.keyword)::text = 'homepage'::text))))
+  WHERE ((eh.ebuild IS NULL) AND (em.value <> ''::text));
 
 
 --
@@ -626,7 +704,17 @@ CREATE VIEW missing_homepage AS
 --
 
 CREATE VIEW missing_license AS
-    SELECT e.id AS ebuild, c.name AS category_name, p.name AS package_name, e.pf, em.value AS metadata FROM ((((category c JOIN package p ON ((p.category = c.id))) JOIN ebuild e ON ((e.package = p.id))) LEFT JOIN ebuild_license el ON ((el.ebuild = e.id))) LEFT JOIN ebuild_metadata em ON (((em.ebuild = e.id) AND ((em.keyword)::text = 'license'::text)))) WHERE ((el.ebuild IS NULL) AND (em.value <> ''::text));
+ SELECT e.id AS ebuild,
+    c.name AS category_name,
+    p.name AS package_name,
+    e.pf,
+    em.value AS metadata
+   FROM ((((category c
+   JOIN package p ON ((p.category = c.id)))
+   JOIN ebuild e ON ((e.package = p.id)))
+   LEFT JOIN ebuild_license el ON ((el.ebuild = e.id)))
+   LEFT JOIN ebuild_metadata em ON (((em.ebuild = e.id) AND ((em.keyword)::text = 'license'::text))))
+  WHERE ((el.ebuild IS NULL) AND (em.value <> ''::text));
 
 
 --
@@ -634,7 +722,15 @@ CREATE VIEW missing_license AS
 --
 
 CREATE VIEW missing_metadata AS
-    SELECT DISTINCT e.id AS ebuild, c.name AS category_name, p.name AS package_name, e.pf FROM (((category c JOIN package p ON ((p.category = c.id))) JOIN ebuild e ON ((e.package = p.id))) LEFT JOIN ebuild_metadata em ON ((em.ebuild = e.id))) WHERE (em.ebuild IS NULL);
+ SELECT DISTINCT e.id AS ebuild,
+    c.name AS category_name,
+    p.name AS package_name,
+    e.pf
+   FROM (((category c
+   JOIN package p ON ((p.category = c.id)))
+   JOIN ebuild e ON ((e.package = p.id)))
+   LEFT JOIN ebuild_metadata em ON ((em.ebuild = e.id)))
+  WHERE (em.ebuild IS NULL);
 
 
 --
@@ -642,7 +738,17 @@ CREATE VIEW missing_metadata AS
 --
 
 CREATE VIEW missing_use AS
-    SELECT e.id, c.name AS category, p.name AS package, e.pf, em.value AS metadata FROM ((((category c JOIN package p ON ((p.category = c.id))) JOIN ebuild e ON ((e.package = p.id))) LEFT JOIN ebuild_use eu ON ((eu.ebuild = e.id))) LEFT JOIN ebuild_metadata em ON (((em.ebuild = e.id) AND ((em.keyword)::text = 'iuse'::text)))) WHERE ((eu.ebuild IS NULL) AND (em.value <> ''::text));
+ SELECT e.id,
+    c.name AS category,
+    p.name AS package,
+    e.pf,
+    em.value AS metadata
+   FROM ((((category c
+   JOIN package p ON ((p.category = c.id)))
+   JOIN ebuild e ON ((e.package = p.id)))
+   LEFT JOIN ebuild_use eu ON ((eu.ebuild = e.id)))
+   LEFT JOIN ebuild_metadata em ON (((em.ebuild = e.id) AND ((em.keyword)::text = 'iuse'::text))))
+  WHERE ((eu.ebuild IS NULL) AND (em.value <> ''::text));
 
 
 --
@@ -662,7 +768,14 @@ CREATE TABLE mtime (
 --
 
 CREATE VIEW new_packages AS
-    SELECT p.id AS package, c.name AS category_name, p.name AS package_name, p.portage_mtime FROM (category c JOIN package p ON ((p.category = c.id))) WHERE (p.portage_mtime IS NOT NULL) ORDER BY p.idate DESC, c.name, p.name;
+ SELECT p.id AS package,
+    c.name AS category_name,
+    p.name AS package_name,
+    p.portage_mtime
+   FROM (category c
+   JOIN package p ON ((p.category = c.id)))
+  WHERE (p.portage_mtime IS NOT NULL)
+  ORDER BY p.idate DESC, c.name, p.name;
 
 
 --
@@ -889,7 +1002,27 @@ ALTER SEQUENCE package_use_id_seq OWNED BY package_use.id;
 --
 
 CREATE VIEW search_ebuilds AS
-    SELECT e.id AS ebuild, e.package, c.name AS category_name, p.name AS package_name, (((c.name)::text || '/'::text) || (p.name)::text) AS cp, e.pf AS ebuild_name, p.description, e.ev, e.lvl, e.p, e.rc, e.pre, e.beta, e.alpha, e.pr, (((c.name)::text || '/'::text) || (e.pf)::text) AS atom FROM (((ebuild e JOIN package p ON ((e.package = p.id))) JOIN category c ON ((c.id = p.category))) LEFT JOIN ebuild_mask em ON ((e.id = em.ebuild))) WHERE (e.status = ANY (ARRAY[0, 3]));
+ SELECT e.id AS ebuild,
+    e.package,
+    c.name AS category_name,
+    p.name AS package_name,
+    (((c.name)::text || '/'::text) || (p.name)::text) AS cp,
+    e.pf AS ebuild_name,
+    p.description,
+    e.ev,
+    e.lvl,
+    e.p,
+    e.rc,
+    e.pre,
+    e.beta,
+    e.alpha,
+    e.pr,
+    (((c.name)::text || '/'::text) || (e.pf)::text) AS atom
+   FROM (((ebuild e
+   JOIN package p ON ((e.package = p.id)))
+   JOIN category c ON ((c.id = p.category)))
+   LEFT JOIN ebuild_mask em ON ((e.id = em.ebuild)))
+  WHERE (e.status = ANY (ARRAY[0, 3]));
 
 
 SET default_with_oids = true;
@@ -930,7 +1063,13 @@ ALTER SEQUENCE use_id_seq OWNED BY use.id;
 --
 
 CREATE VIEW view_arches AS
-    SELECT e.id AS ebuild, ea.arch, a.name, ea.status FROM ((ebuild e JOIN ebuild_arch ea ON ((ea.ebuild = e.id))) JOIN arch a ON ((ea.arch = a.id)));
+ SELECT e.id AS ebuild,
+    ea.arch,
+    a.name,
+    ea.status
+   FROM ((ebuild e
+   JOIN ebuild_arch ea ON ((ea.ebuild = e.id)))
+   JOIN arch a ON ((ea.arch = a.id)));
 
 
 --
@@ -938,7 +1077,32 @@ CREATE VIEW view_arches AS
 --
 
 CREATE VIEW view_ebuild AS
-    SELECT e.id, c.name AS category_name, c.id AS category, p.name AS package_name, e.package, e.pf, e.pv, e.pr, e.pvr, e.alpha, e.beta, e.pre, e.rc, e.p, e.slot, e.version, e.ev, e.lvl, e.cache_mtime, e.portage_mtime, e.idate, (em.ebuild IS NOT NULL) AS masked FROM (((ebuild e JOIN package p ON ((e.package = p.id))) JOIN category c ON ((c.id = p.category))) LEFT JOIN ebuild_mask em ON ((e.id = em.ebuild)));
+ SELECT e.id,
+    c.name AS category_name,
+    c.id AS category,
+    p.name AS package_name,
+    e.package,
+    e.pf,
+    e.pv,
+    e.pr,
+    e.pvr,
+    e.alpha,
+    e.beta,
+    e.pre,
+    e.rc,
+    e.p,
+    e.slot,
+    e.version,
+    e.ev,
+    e.lvl,
+    e.cache_mtime,
+    e.portage_mtime,
+    e.idate,
+    (em.ebuild IS NOT NULL) AS masked
+   FROM (((ebuild e
+   JOIN package p ON ((e.package = p.id)))
+   JOIN category c ON ((c.id = p.category)))
+   LEFT JOIN ebuild_mask em ON ((e.id = em.ebuild)));
 
 
 --
@@ -946,7 +1110,14 @@ CREATE VIEW view_ebuild AS
 --
 
 CREATE VIEW view_ebuild_depend AS
-    SELECT DISTINCT ed.ebuild, (((c.name)::text || '/'::text) || (p.name)::text) AS cp, p.description, ed.type FROM (((ebuild_depend ed JOIN ebuild e ON ((ed.ebuild = e.id))) JOIN package p ON ((p.id = ed.package))) JOIN category c ON ((p.category = c.id)));
+ SELECT DISTINCT ed.ebuild,
+    (((c.name)::text || '/'::text) || (p.name)::text) AS cp,
+    p.description,
+    ed.type
+   FROM (((ebuild_depend ed
+   JOIN ebuild e ON ((ed.ebuild = e.id)))
+   JOIN package p ON ((p.id = ed.package)))
+   JOIN category c ON ((p.category = c.id)));
 
 
 --
@@ -954,7 +1125,16 @@ CREATE VIEW view_ebuild_depend AS
 --
 
 CREATE VIEW view_ebuild_level AS
-    SELECT e.id, CASE WHEN (e.p IS NOT NULL) THEN 6 WHEN (e.rc IS NOT NULL) THEN 4 WHEN (e.pre IS NOT NULL) THEN 3 WHEN (e.beta IS NOT NULL) THEN 2 WHEN (e.alpha IS NOT NULL) THEN 1 ELSE 5 END AS level FROM ebuild e;
+ SELECT e.id,
+        CASE
+            WHEN (e.p IS NOT NULL) THEN 6
+            WHEN (e.rc IS NOT NULL) THEN 4
+            WHEN (e.pre IS NOT NULL) THEN 3
+            WHEN (e.beta IS NOT NULL) THEN 2
+            WHEN (e.alpha IS NOT NULL) THEN 1
+            ELSE 5
+        END AS level
+   FROM ebuild e;
 
 
 --
@@ -962,7 +1142,13 @@ CREATE VIEW view_ebuild_level AS
 --
 
 CREATE VIEW view_ebuild_use AS
-    SELECT e.id AS ebuild, u.name, COALESCE(pu.description, u.description) AS description FROM (((use u JOIN ebuild_use eu ON ((eu.use = u.id))) JOIN ebuild e ON ((eu.ebuild = e.id))) LEFT JOIN package_use pu ON (((e.package = pu.package) AND (pu.use = u.id))));
+ SELECT e.id AS ebuild,
+    u.name,
+    COALESCE(pu.description, u.description) AS description
+   FROM (((use u
+   JOIN ebuild_use eu ON ((eu.use = u.id)))
+   JOIN ebuild e ON ((eu.ebuild = e.id)))
+   LEFT JOIN package_use pu ON (((e.package = pu.package) AND (pu.use = u.id))));
 
 
 --
@@ -970,7 +1156,13 @@ CREATE VIEW view_ebuild_use AS
 --
 
 CREATE VIEW view_licenses AS
-    SELECT e.package, e.id AS ebuild, el.license, l.name FROM ((ebuild e JOIN ebuild_license el ON ((el.ebuild = e.id))) JOIN license l ON ((el.license = l.id)));
+ SELECT e.package,
+    e.id AS ebuild,
+    el.license,
+    l.name
+   FROM ((ebuild e
+   JOIN ebuild_license el ON ((el.ebuild = e.id)))
+   JOIN license l ON ((el.license = l.id)));
 
 
 --
@@ -978,7 +1170,13 @@ CREATE VIEW view_licenses AS
 --
 
 CREATE VIEW view_package AS
-    SELECT c.id AS category, p.id AS package, c.name AS category_name, p.name AS package_name, (((c.name)::text || '/'::text) || (p.name)::text) AS cp FROM (category c JOIN package p ON ((p.category = c.id)));
+ SELECT c.id AS category,
+    p.id AS package,
+    c.name AS category_name,
+    p.name AS package_name,
+    (((c.name)::text || '/'::text) || (p.name)::text) AS cp
+   FROM (category c
+   JOIN package p ON ((p.category = c.id)));
 
 
 --
@@ -986,7 +1184,12 @@ CREATE VIEW view_package AS
 --
 
 CREATE VIEW view_package_bugs AS
-    SELECT b.bug_id AS bug, p.id AS package, b.short_short_desc FROM ((package p JOIN category c ON ((p.category = c.id))) JOIN bugzilla b ON (((b.short_short_desc)::text ~~ (((('%'::text || (c.name)::text) || '/'::text) || (p.name)::text) || '%'::text))));
+ SELECT b.bug_id AS bug,
+    p.id AS package,
+    b.short_short_desc
+   FROM ((package p
+   JOIN category c ON ((p.category = c.id)))
+   JOIN bugzilla b ON (((b.short_short_desc)::text ~~ (((('%'::text || (c.name)::text) || '/'::text) || (p.name)::text) || '%'::text))));
 
 
 --
@@ -994,7 +1197,14 @@ CREATE VIEW view_package_bugs AS
 --
 
 CREATE VIEW view_package_depend AS
-    SELECT DISTINCT e.package, (((c.name)::text || '/'::text) || (p.name)::text) AS cp, p.description, ed.type FROM (((ebuild_depend ed JOIN ebuild e ON ((ed.ebuild = e.id))) JOIN package p ON ((p.id = ed.package))) JOIN category c ON ((p.category = c.id)));
+ SELECT DISTINCT e.package,
+    (((c.name)::text || '/'::text) || (p.name)::text) AS cp,
+    p.description,
+    ed.type
+   FROM (((ebuild_depend ed
+   JOIN ebuild e ON ((ed.ebuild = e.id)))
+   JOIN package p ON ((p.id = ed.package)))
+   JOIN category c ON ((p.category = c.id)));
 
 
 --
@@ -1002,7 +1212,14 @@ CREATE VIEW view_package_depend AS
 --
 
 CREATE VIEW view_packages AS
-    SELECT c.id AS category, p.id AS package, c.name AS category_name, p.name AS package_name, (((c.name)::text || '/'::text) || (p.name)::text) AS cp, p.description FROM (category c JOIN package p ON ((p.category = c.id)));
+ SELECT c.id AS category,
+    p.id AS package,
+    c.name AS category_name,
+    p.name AS package_name,
+    (((c.name)::text || '/'::text) || (p.name)::text) AS cp,
+    p.description
+   FROM (category c
+   JOIN package p ON ((p.category = c.id)));
 
 
 --
@@ -1010,7 +1227,17 @@ CREATE VIEW view_packages AS
 --
 
 CREATE VIEW view_package_licenses AS
-    SELECT DISTINCT l.id AS license, l.name AS license_name, p.category, p.category_name, p.package, p.package_name, p.description FROM (((view_packages p JOIN ebuild e ON ((e.package = p.package))) JOIN ebuild_license el ON ((el.ebuild = e.id))) JOIN license l ON ((el.license = l.id)));
+ SELECT DISTINCT l.id AS license,
+    l.name AS license_name,
+    p.category,
+    p.category_name,
+    p.package,
+    p.package_name,
+    p.description
+   FROM (((view_packages p
+   JOIN ebuild e ON ((e.package = p.package)))
+   JOIN ebuild_license el ON ((el.ebuild = e.id)))
+   JOIN license l ON ((el.license = l.id)));
 
 
 --
@@ -1018,7 +1245,13 @@ CREATE VIEW view_package_licenses AS
 --
 
 CREATE VIEW view_package_use AS
-    SELECT DISTINCT e.package, u.name, COALESCE(pu.description, u.description) AS description FROM (((use u JOIN ebuild_use eu ON ((eu.use = u.id))) JOIN ebuild e ON ((eu.ebuild = e.id))) LEFT JOIN package_use pu ON (((e.package = pu.package) AND (pu.use = u.id))));
+ SELECT DISTINCT e.package,
+    u.name,
+    COALESCE(pu.description, u.description) AS description
+   FROM (((use u
+   JOIN ebuild_use eu ON ((eu.use = u.id)))
+   JOIN ebuild e ON ((eu.ebuild = e.id)))
+   LEFT JOIN package_use pu ON (((e.package = pu.package) AND (pu.use = u.id))));
 
 
 --
@@ -1026,7 +1259,17 @@ CREATE VIEW view_package_use AS
 --
 
 CREATE VIEW view_package_useflags AS
-    SELECT DISTINCT u.id AS use, u.name AS useflag_name, p.category, p.category_name, p.package, p.package_name, p.description FROM (((view_packages p JOIN ebuild e ON ((e.package = p.package))) JOIN ebuild_use eu ON ((eu.ebuild = e.id))) JOIN use u ON ((eu.use = u.id)));
+ SELECT DISTINCT u.id AS use,
+    u.name AS useflag_name,
+    p.category,
+    p.category_name,
+    p.package,
+    p.package_name,
+    p.description
+   FROM (((view_packages p
+   JOIN ebuild e ON ((e.package = p.package)))
+   JOIN ebuild_use eu ON ((eu.ebuild = e.id)))
+   JOIN use u ON ((eu.use = u.id)));
 
 
 --
@@ -1034,7 +1277,16 @@ CREATE VIEW view_package_useflags AS
 --
 
 CREATE VIEW view_pmask_level AS
-    SELECT pm.id, CASE WHEN (pm.p IS NOT NULL) THEN 6 WHEN (pm.rc IS NOT NULL) THEN 4 WHEN (pm.pre IS NOT NULL) THEN 3 WHEN (pm.beta IS NOT NULL) THEN 2 WHEN (pm.alpha IS NOT NULL) THEN 1 ELSE 5 END AS level FROM package_mask pm;
+ SELECT pm.id,
+        CASE
+            WHEN (pm.p IS NOT NULL) THEN 6
+            WHEN (pm.rc IS NOT NULL) THEN 4
+            WHEN (pm.pre IS NOT NULL) THEN 3
+            WHEN (pm.beta IS NOT NULL) THEN 2
+            WHEN (pm.alpha IS NOT NULL) THEN 1
+            ELSE 5
+        END AS level
+   FROM package_mask pm;
 
 
 --
@@ -1042,7 +1294,16 @@ CREATE VIEW view_pmask_level AS
 --
 
 CREATE VIEW view_reverse_depend AS
-    SELECT DISTINCT ed.ebuild, ed.package, (((c.name)::text || '/'::text) || (p.name)::text) AS cp, p.description, c.name AS category_name, p.name AS package_name FROM (((ebuild_depend ed JOIN ebuild e ON ((ed.ebuild = e.id))) JOIN package p ON ((e.package = p.id))) JOIN category c ON ((c.id = p.category)));
+ SELECT DISTINCT ed.ebuild,
+    ed.package,
+    (((c.name)::text || '/'::text) || (p.name)::text) AS cp,
+    p.description,
+    c.name AS category_name,
+    p.name AS package_name
+   FROM (((ebuild_depend ed
+   JOIN ebuild e ON ((ed.ebuild = e.id)))
+   JOIN package p ON ((e.package = p.id)))
+   JOIN category c ON ((c.id = p.category)));
 
 
 SET default_with_oids = false;
@@ -1686,5 +1947,16 @@ ALTER TABLE ONLY package_use
 
 
 --
+-- Name: public; Type: ACL; Schema: -; Owner: -
+--
+
+REVOKE ALL ON SCHEMA public FROM PUBLIC;
+REVOKE ALL ON SCHEMA public FROM postgres;
+GRANT ALL ON SCHEMA public TO postgres;
+GRANT ALL ON SCHEMA public TO PUBLIC;
+
+
+--
 -- PostgreSQL database dump complete
 --
+
