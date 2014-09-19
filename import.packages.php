@@ -16,7 +16,7 @@
 	 * file was removed, so, with all due diligence, we will check those later to see
 	 * if something was actually taken away, and update the database.
 	 */
-	
+
 	/**
 	 * This is the first file where tables start to have a status column.  There is
 	 * only three status levels: 0 - completely imported, and "live", 1 - being updated,
@@ -28,9 +28,9 @@
 	 */
 
 	require_once 'header.php';
-	
+
 	$tree =& PortageTree::singleton();
-	
+
 	require_once 'class.portage.category.php';
 	require_once 'class.portage.package.php';
 	require_once 'class.portage.package.changelog.php';
@@ -48,64 +48,64 @@
 	}
 
 	$arr_update = array();
-	
+
 	// Find the packages updated since last time
 	$sql = "SELECT COUNT(1) FROM package;";
 	$count = $db->getOne($sql);
 	if(!$count || $debug)
 		$all = true;
 	else {
-	
+
 		$sql = "SELECT MAX(portage_mtime) FROM package;";
 		$max_portage_mtime = $db->getOne($sql);
-		
+
 		if(is_null($max_portage_mtime))
 			$all = true;
-	
+
 	}
-	
+
 	if($count === "0") {
 		$sql = "ALTER SEQUENCE package_id_seq RESTART WITH 1;";
 		$db->query($sql);
 	}
-	
+
 	if(!$all) {
-	
+
 		$categories = $tree->getCategories();
-	
+
 		$tmp = tempnam('/tmp', 'znurt');
 		touch($tmp, $max_portage_mtime);
-		
+
 		$arr = array();
-		
+
 		$dir = $tree->getTree();
-		
+
 		foreach($categories as $category_name) {
-			
+
 			$category_dir = $dir."/".$category_name;
-			
+
 			$exec = "find $category_dir -mindepth 1 -maxdepth 1 -type d -newer $tmp";
 			$arr = array_merge($arr, shell::cmd($exec));
 		}
 		unlink($tmp);
-		
+
 		$count = 0;
-		
+
 		foreach($arr as $name) {
-		
+
 			$name = str_replace($dir."/", "", $name);
 			$tmp = explode("/", $name);
 			$arr_update[$tmp[0]][] = $tmp[1];
-			
+
 			$count++;
-		
+
 		}
-		
+
 	}
-	
+
 	$sql = "SELECT id, name FROM category ORDER BY name;";
 	$arr_categories = $db->getAssoc($sql);
-	
+
 	$sql = "SELECT category, package, category_name, package_name FROM view_package;";
 	$arr = $db->getAll($sql);
 	foreach($arr as $row) {
@@ -116,7 +116,7 @@
 	$counter_categories = 1;
 
 	echo "importing category packages\n";
-	
+
 	foreach($arr_categories as $category_id => $category_name) {
 
 		$c = new PortageCategory($category_name);
@@ -127,9 +127,9 @@
 
 		echo "[$counter_categories/$num_categories] $category_name ($num_packages)\n";
 		$counter_categories++;
-		
+
 		$arr_diff = importDiff('package', $arr_packages, "category = $category_id");
-		
+
 		// FIXME Flag to be deleted, execute later
 		// This is dangerous to delete right now because 1) it will take a *long* time, and
 		// 2) you're breaking the whole "snapshot" approach.
@@ -139,24 +139,24 @@
 				$db->query($sql);
 			}
 		}
-		
+
 		if(count($arr_diff['insert'])) {
-		
+
 			foreach($arr_diff['insert'] as $package_name) {
-			
+
 				$p = new PortagePackage($category_name, $package_name);
 				$ch = new PackageChangelog($category_name, $package_name);
 				$ma = new PackageManifest($category_name, $package_name);
-			
+
  				$arr_insert = array(
  					'category' => $category_id,
  					'name' => $package_name,
  					'portage_mtime' => $p->portage_mtime,
  				);
 				$db->autoExecute('package', $arr_insert, MDB2_AUTOQUERY_INSERT);
-				
+
 				$package_id = $db->lastInsertID();
-				
+
 				// New changelog entry
 				$arr_insert = array(
 					'package' => $package_id,
@@ -166,9 +166,9 @@
 					'filesize' => $ch->filesize,
 					'recent_changes' => $ch->recent_changes,
 				);
-				
+
 				$db->autoExecute('package_changelog', $arr_insert, MDB2_AUTOQUERY_INSERT);
-				
+
 				// New Manifest entry
 				$arr_insert = array(
 					'package' => $package_id,
@@ -177,14 +177,14 @@
 					'hash' => $ma->hash,
 					'filesize' => $ma->filesize,
 				);
-				
+
 				$db->autoExecute('package_manifest', $arr_insert, MDB2_AUTOQUERY_INSERT);
-				
+
 				// Import package files
 				$arr = $ma->getDistfiles();
-				
+
 				foreach($arr as $filename) {
-				
+
 					$arr_insert = array(
 						'package' => $package_id,
 						'filename' => $filename,
@@ -192,16 +192,16 @@
 						'hash' => $ma->getHash($filename),
 						'filesize' => $ma->getFilesize($filename),
 					);
-					
+
 					$db->autoExecute('package_files', $arr_insert, MDB2_AUTOQUERY_INSERT);
-				
+
 				}
-				
+
 				// Import patches
 				$arr = $ma->getFiles();
-				
+
 				foreach($arr as $filename) {
-				
+
 					$arr_insert = array(
 						'package' => $package_id,
 						'filename' => $filename,
@@ -209,53 +209,53 @@
 						'hash' => $ma->getHash($filename),
 						'filesize' => $ma->getFilesize($filename),
 					);
-					
+
 					$db->autoExecute('package_files', $arr_insert, MDB2_AUTOQUERY_INSERT);
-				
+
 				}
-				
+
 			}
 		}
 	}
-	
+
 	unset($c, $p, $ch, $ma, $arr_insert, $arr_diff, $arr_packages, $arr_categories, $categories, $package_id, $arr, $filename);
-	
+
 	$count = 0;
-	
+
 	foreach($arr_update as $category_name => $arr_packages) {
-	
+
 		foreach($arr_packages as $package_name) {
-			
+
 			$package_id = $arr_package_ids[$category_name][$package_name];
-			
+
 			if($package_id) {
-			
+
 				$p = new PortagePackage($category_name, $package_name);
 				$db_package = new DBPackage($package_id);
-					
+
 				$manifest = new PackageManifest($category_name, $package_name, $tree->getTree());
 				$db_manifest = new DBPackageManifest($package_id);
-				
+
 				if($manifest->hash != $db_manifest->hash || $debug) {
-				
+
 					if($debug) {
 						shell::msg("Updating $category_name/$package_name id: $package_id");
 					}
-				
+
 					$changelog = new PackageChangelog($category_name, $package_name, $tree->getTree());
 					$db_changelog = new DBPackageChangelog($package_id);
-					
+
 					// If the hash of this Manifest file changed, then a file
 					// somewhere has been added, deleted or modified.  Flag the status
 					// to make sure we examine that directory later.
 					$db_package->status = 1;
-					
+
 					// Update the manifest in the DB
 					$db_manifest->hash = $manifest->hash;
 					$db_manifest->manifest = $manifest->manifest;
 					$db_manifest->mtime= $manifest->mtime;
 					$db_manifest->filesize = $manifest->filesize;
-					
+
 					// Same for the changelog entry if it's changed on the filesystem.
 					// FIXME Add metadata.xml as well
 					if($changelog->hash != $db_changelog->hash) {
@@ -266,17 +266,17 @@
  						$db_changelog->changelog = $changelog->changelog;
  						$db_changelog->recent_changes = $changelog->recent_changes;
 					}
-					
+
 					// FIXME hopefully can phase out mtime soon.
 					if($p->portage_mtime != $db_package->portage_mtime) {
 						$db_package->portage_mtime = $p->portage_mtime;
 					}
-					
+
 				}
 			}
 		}
 	}
-	
+
 	unset($arr_update, $category_name, $arr_packages, $package_id, $arr_package_ids, $db_package);
-	
+
 ?>

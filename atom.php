@@ -13,7 +13,7 @@
 	$str = "net-dialup/mgetty-1.1.36-r3";
 
 	$e = new PortageEbuild($str);
-	
+
 
  	shell::msg("atom: ".$e->atom);
  	shell::msg("pn: ".$e->pn);
@@ -26,11 +26,11 @@
 	shell::msg("pr: ".$e->pr);
 	shell::msg("version: ".$e->version);
 	shell::msg("mtime: ".$e->mtime);
-	
+
 // 	shell::msg($e->getSuffix("_p"));
-// 	
+//
 // 	shell::msg("mtime: ".$e->mtime);
-	
+
  	#print_r($e->metadata());
 
 
@@ -38,22 +38,22 @@
 // 	var_dump($e->_beta);
 
 // 	$e->getSuffix('_beta');
-	
-	
+
+
 //  	var_dump($e->version);
 // 	var_dump($e->_alpha);
 // 	var_dump($e->_beta);
 
 	$e->getComponents();
-	
+
 //  	var_dump($e->arr_components);
- 	
+
 //  	var_dump($e->getPackageVersionMinusRevision());
-	
-	
+
+
 	shell::msg("Class Atom");
 	$a = new PortageAtom($str);
-	
+
 // 	shell::msg("atom: ".$a->atom);
   	shell::msg("pn: ".$a->getPackageName());
  	shell::msg("pf: ".$a->pf);
@@ -64,5 +64,5 @@
 	shell::msg("_p: ".$a->_p);
 	shell::msg("pr: ".$a->pr);
 	shell::msg("version: ".$a->version);
-	
+
 ?>
