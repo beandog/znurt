@@ -4,7 +4,7 @@
 
 	/**
 	 * The procedure to update an ebuild is this -- remove the old one, and insert the new one.
-	 * This is actually much simpler than trying to update everything *and* it allows the 
+	 * This is actually much simpler than trying to update everything *and* it allows the
 	 * website to constantly keep a snapshot of it's current status regardless of backend
 	 * activity.
 	 *
@@ -20,7 +20,7 @@
 	 * For now, you're going to have to manually flip some bits to get it to correct mistakes
 	 * like that.  It's too much of a pain to have it check for it (at this point).
 	 */
-	 
+	
 	 /**
 	  * This script is similar to the package one, in that it will create a temporary file
 	  * and set the mtime to the last package, and then look for any new changes.  Makes the

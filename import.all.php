@@ -65,16 +65,16 @@
 	
 	function memory_usage() {
         $mem_usage = memory_get_usage(true);
-       
+      
         if ($mem_usage < 1024)
             $str = $mem_usage."b";
         else
             $str = round($mem_usage/1024,2)."kb";
 //         else
 //             $str = round($mem_usage/1048576,2)." megabytes";
-           
+          
         return $str;
-    } 
+    }
 	
 
 ?>

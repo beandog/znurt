@@ -18,7 +18,7 @@
 	$arr_new[$type] = $arr_delete[$type] = $arr_use_flags[$type] = array();
 	
 	$arr_find = File_Find::search('desc$', $tree->getTree().'/profiles/desc/');
-	 
+	
 	foreach($arr_find as $filename) {
 	
 		$basename = $prefix = basename($filename);
