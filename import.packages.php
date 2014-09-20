@@ -125,7 +125,7 @@
 		$num_packages = count($arr_packages);
 		$counter_categories = str_pad($counter_categories, strlen($num_categories), 0, STR_PAD_LEFT);
 
-		echo "[$counter_categories/$num_categories] $category_name ($num_packages)\n";
+		// echo "[$counter_categories/$num_categories] $category_name ($num_packages)\n";
 		$counter_categories++;
 
 		$arr_diff = importDiff('package', $arr_packages, "category = $category_id");
@@ -142,32 +142,65 @@
 
 		if(count($arr_diff['insert'])) {
 
+
+			/** Package Names **/
+
+			$arr_insert_sql = array();
+			$arr_insert_package = array();
+
 			foreach($arr_diff['insert'] as $package_name) {
 
 				$p = new PortagePackage($category_name, $package_name);
+
+				$arr_insert_sql = array(pg_escape_literal($category_id), pg_escape_literal($package_name), pg_escape_literal($p->portage_mtime));
+
+				$arr_insert_package[] = '('.implode(', ', $arr_insert_sql).')';
+
+			}
+
+			$sql_insert = "BEGIN;\n";
+			$sql_insert .= "INSERT INTO package (category, name, portage_mtime) VALUES\n";
+			$sql_insert .= implode(",\n", $arr_insert_package).";\n";
+			$sql_insert .= "COMMIT;\n";
+
+			pg_query($sql_insert);
+
+
+			/** Package Changelogs **/
+
+			$arr_insert_sql = array();
+			$arr_insert_changelog = array();
+
+			foreach($arr_diff['insert'] as $package_name) {
+
+				$sql = "SELECT id FROM package WHERE category = ".pg_escape_literal($category_id)." AND name = ".pg_escape_literal($package_name).";";
+				$package_id = current(pg_fetch_row(pg_query($sql)));
+
 				$ch = new PackageChangelog($category_name, $package_name);
-				$ma = new PackageManifest($category_name, $package_name);
 
- 				$arr_insert = array(
- 					'category' => $category_id,
- 					'name' => $package_name,
- 					'portage_mtime' => $p->portage_mtime,
- 				);
-				$db->autoExecute('package', $arr_insert, MDB2_AUTOQUERY_INSERT);
-
-				$package_id = $db->lastInsertID();
-
-				// New changelog entry
-				$arr_insert = array(
-					'package' => $package_id,
-					'changelog' => $ch->changelog,
-					'mtime' => $ch->mtime,
-					'hash' => $ch->hash,
-					'filesize' => $ch->filesize,
-					'recent_changes' => $ch->recent_changes,
+				$arr_insert_sql = array(
+					pg_escape_literal($package_id),
+					pg_escape_literal($ch->changelog),
+					pg_escape_literal($ch->mtime),
+					pg_escape_literal($ch->hash),
+					pg_escape_literal($ch->filesize),
+					pg_escape_literal($ch->recent_changes),
 				);
 
-				$db->autoExecute('package_changelog', $arr_insert, MDB2_AUTOQUERY_INSERT);
+				$arr_insert_changelog[] = '('.implode(', ', $arr_insert_sql).')';
+
+			}
+
+			$sql_insert = "BEGIN;\n";
+			$sql_insert .= "INSERT INTO package_changelog (package, changelog, mtime, hash, filesize, recent_changes) VALUES\n";
+			$sql_insert .= implode(",\n", $arr_insert_changelog).";\n";
+			$sql_insert .= "COMMIT;\n";
+
+			pg_query($sql_insert);
+
+			foreach($arr_diff['insert'] as $package_name) {
+
+				$ma = new PackageManifest($category_name, $package_name);
 
 				// New Manifest entry
 				$arr_insert = array(
@@ -215,7 +248,9 @@
 				}
 
 			}
+
 		}
+
 	}
 
 	unset($c, $p, $ch, $ma, $arr_insert, $arr_diff, $arr_packages, $arr_categories, $categories, $package_id, $arr, $filename);
