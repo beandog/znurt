@@ -10,6 +10,22 @@ SET check_function_bodies = false;
 SET client_min_messages = warning;
 
 --
+-- Name: znurt; Type: DATABASE; Schema: -; Owner: -
+--
+
+CREATE DATABASE znurt WITH TEMPLATE = template0 ENCODING = 'UTF8' LC_COLLATE = 'en_US.UTF-8' LC_CTYPE = 'en_US.UTF-8';
+
+
+\connect znurt
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SET check_function_bodies = false;
+SET client_min_messages = warning;
+
+--
 -- Name: plpgsql; Type: EXTENSION; Schema: -; Owner: -
 --
 
@@ -1944,16 +1960,6 @@ ALTER TABLE ONLY package_use
 
 ALTER TABLE ONLY package_use
     ADD CONSTRAINT package_use_use_fkey FOREIGN KEY (use) REFERENCES use(id) ON DELETE CASCADE;
-
-
---
--- Name: public; Type: ACL; Schema: -; Owner: -
---
-
-REVOKE ALL ON SCHEMA public FROM PUBLIC;
-REVOKE ALL ON SCHEMA public FROM postgres;
-GRANT ALL ON SCHEMA public TO postgres;
-GRANT ALL ON SCHEMA public TO PUBLIC;
 
 
 --
