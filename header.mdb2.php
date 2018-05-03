@@ -30,12 +30,12 @@
 	$db->setFetchMode(MDB2_FETCHMODE_ASSOC);
 
 	PEAR::setErrorHandling(PEAR_ERROR_DIE);
-	
+
 	function pearError ($e) {
 		echo $e->getMessage().': '.$e->getUserinfo();
 		echo '\n';
 	}
-	
+
 	PEAR::setErrorHandling(PEAR_ERROR_CALLBACK, 'pearError');
 
 ?>

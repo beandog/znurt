@@ -8,13 +8,13 @@
 	require_once '/home/steve/php/inc/class.shell.php';
 
 	$category = "media-video";
-	$package = "mplayer";	
+	$package = "mplayer";
 
 	$p = new PortagePackage($category, $package);
-	
+
 
 // 	shell::msg($p);
-	
+
 // 	print_r($p->getEbuilds());
 // 	shell::msg($p->getCategory());
 // 	shell::msg($p->getChangelog());
@@ -37,6 +37,6 @@
 // 	print_r($p->changelog_mtime);
 // 	print_r($p->metadata_mtime);
 	print_r($p->manifest_mtime);
-	
- 	
+
+
 ?>

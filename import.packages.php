@@ -146,7 +146,7 @@
 		// This is dangerous to delete right now because 1) it will take a *long* time, and
 		// 2) you're breaking the whole "snapshot" approach.
 		if(count($arr_diff['delete'])) {
-			
+
 			echo "* Deleting num packages: ".count($arr_diff['delete'])."\n";
 
 			foreach($arr_diff['delete'] as $package_name) {
@@ -204,7 +204,7 @@
 				foreach($arr as $filename) {
 
 					echo "* Filename:\t$filename\n";
-	
+
 					$hash = $ma->getHash($filename);
 					$hash = trim($hash);
 					$filesize = $ma->getFilesize($filename);

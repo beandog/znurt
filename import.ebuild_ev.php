@@ -1,11 +1,11 @@
 <?php
 
 // 	$verbose = true;
-// 	$qa = true;	
+// 	$qa = true;
 
 	require_once 'header.php';
 	require_once 'import.functions.php';
-	
+
 	// Also fix the levels
 	$sql = "UPDATE ebuild e SET lvl = CASE
             WHEN e.p IS NOT NULL THEN 6
@@ -16,34 +16,34 @@
             ELSE 5
         END WHERE e.status = 1 OR e.lvl = 0;";
 	$db->query($sql);
-	
+
 	$sql = "SELECT * FROM missing_ev;";
 	$arr = $db->getAll($sql);
-	
+
 	$arr_packages = array();
-	
+
 	foreach($arr as $row) {
 		extract($row);
 		$arr_packages[$package][$ebuild] = $version;
 	}
-	
+
 	foreach($arr_packages as $package => $arr) {
-	
+
 // 		print_r($arr);
-		
+
 		$ext = extendVersions($arr);
-		
+
 // 		print_r($ext); die;
-		
+
 		foreach($ext as $ebuild => $ev) {
 			$arr_update = array('ev' => $ev);
 			$db->autoExecute('ebuild', $arr_update, MDB2_AUTOQUERY_UPDATE, "id = $ebuild");
 		}
-		
+
 	}
-	
+
 // 	print_r($arr_packages);
-	
-	
-	
+
+
+
 ?>
