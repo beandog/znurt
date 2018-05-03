@@ -56,10 +56,12 @@
 		echo pg_last_error()."\n";
 
 
+	/*
 	$sql = "DELETE FROM ebuild WHERE status > 0;";
 	$rs = pg_query($sql);
 	if($rs === false)
 		echo pg_last_error()."\n";
+	*/
 
 	// Check to see if there are any ebuilds
 	$sql = "SELECT COUNT(1) FROM ebuild WHERE status = 0;";
