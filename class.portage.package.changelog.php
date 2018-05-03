@@ -13,6 +13,7 @@
 		private $mtime;
 
 		private $changelog;
+		public $valid;
 		private $hash;
 		private $filesize;
 
@@ -78,10 +79,19 @@
 				$this->package = $package;
 				$this->category = $category;
 				$this->tree = $tree;
+			} else {
+				$this->valid = false;
+				return false;
 			}
+
 
 			if(file_exists($this->dir."/ChangeLog")) {
 				$this->filename = $this->dir."/ChangeLog";
+				$this->valid = true;
+				return true;
+			} else {
+				$this->valid = false;
+				return false;
 			}
 
 		}
