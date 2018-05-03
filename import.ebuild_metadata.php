@@ -76,8 +76,6 @@
 		$arr = $db->getCol($sql);
 		foreach($arr as $package_id) {
 
-			if($verbose)
-				echo "$total/$count\n";
 			$total++;
 
 			$sql = "UPDATE package SET description = package_description(id) WHERE id = $package_id;";
