@@ -471,8 +471,12 @@
 		function getHash() {
 
 			if(!$this->hash) {
-				$contents = file_get_contents($this->filename);
-				$this->hash = sha1($contents);
+				if(!file_exists($this->filename)) {
+					$this->hash = '';
+				} else {
+					$contents = file_get_contents($this->filename);
+					$this->hash = sha1($contents);
+				}
 			}
 
 			return $this->hash;
