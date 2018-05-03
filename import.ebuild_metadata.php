@@ -38,6 +38,8 @@
 		$e = new PortageEbuild("$category_name/$pf");
 
 		shell::msg("$category_name/$e ($count/$total)");
+		echo "\033[K";
+		echo "$category_name/$e ($count/$total)\r";
 
 		$arr_metadata = $e->metadata();
 
@@ -63,6 +65,8 @@
 		$count++;
 
 	}
+
+	echo "\n";
 
 	// Set the new package descriptions
 	$sql = "SELECT COUNT(1) FROM package WHERE status = 1 OR description = '';";
