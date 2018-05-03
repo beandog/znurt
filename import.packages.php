@@ -127,8 +127,6 @@
 	$num_categories = count($arr_categories);
 	$counter_categories = 1;
 
-	echo "[Packages]\n";
-
 	foreach($arr_categories as $category_id => $category_name) {
 
 		$c = new PortageCategory($category_name);
@@ -137,9 +135,9 @@
 		$num_packages = count($arr_packages);
 		$counter_categories = str_pad($counter_categories, strlen($num_categories), 0, STR_PAD_LEFT);
 
-		// echo "[$counter_categories/$num_categories] $category_name ($num_packages)\n";
 		$counter_categories++;
 
+		echo "import category: $category_name\r";
 		$arr_diff = importDiff('package', $arr_packages, "category = $category_id");
 
 		// FIXME Flag to be deleted, execute later
@@ -158,9 +156,6 @@
 
 		if(count($arr_diff['insert'])) {
 
-			echo "[$category_name]\n";
-			echo "* New packages: ".count($arr_diff['insert'])."\n";
-
 			/** Package Names **/
 
 			$arr_insert_sql = array();
@@ -168,12 +163,11 @@
 
 			foreach($arr_diff['insert'] as $package_name) {
 
+				echo "\033[K";
+				echo "import packages: $category_name/$package_name\r";
+
 				$p = new PortagePackage($category_name, $package_name);
 				$mtime = $p->portage_mtime;
-
-				echo "[$category_name/$package_name]\n";
-				echo "* Insert new package\n";
-				echo "\n";
 
 				$rs = pg_execute("insert_package", array($category_id, $package_name, $mtime));
 				if($rs === false)
@@ -185,8 +179,8 @@
 
 			foreach($arr_diff['insert'] as $package_name) {
 
-				echo "[$category_name/$package_name]\n";
-				echo "* Manifest\n";
+				echo "\033[K";
+				echo "import packages: $category_name/$package_name (manifests)\r";
 
 				$ma = new PackageManifest($category_name, $package_name);
 				$manifest = trim($ma->manifest);
@@ -203,8 +197,6 @@
 
 				foreach($arr as $filename) {
 
-					echo "* Filename:\t$filename\n";
-
 					$hash = $ma->getHash($filename);
 					$hash = trim($hash);
 					$filesize = $ma->getFilesize($filename);
@@ -215,10 +207,11 @@
 
 				}
 
-				echo "\n";
-
 				// Import patches
 				$arr = $ma->getFiles();
+
+				echo "\033[K";
+				echo "import packages: $category_name/$package_name (patches)\r";
 
 				foreach($arr as $filename) {
 
@@ -236,6 +229,8 @@
 		}
 
 	}
+
+	echo "\n";
 
 	unset($c, $p, $ch, $ma, $arr_insert, $arr_diff, $arr_packages, $arr_categories, $categories, $package_id, $arr, $filename);
 
