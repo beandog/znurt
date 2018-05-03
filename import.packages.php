@@ -115,7 +115,7 @@
 	$num_categories = count($arr_categories);
 	$counter_categories = 1;
 
-	echo "importing category packages\n";
+	echo "[Packages]\n";
 
 	foreach($arr_categories as $category_id => $category_name) {
 
@@ -134,7 +134,11 @@
 		// This is dangerous to delete right now because 1) it will take a *long* time, and
 		// 2) you're breaking the whole "snapshot" approach.
 		if(count($arr_diff['delete'])) {
+			
+			echo "* Deleting num packages: ".count($arr_diff['delete'])."\n";
+
 			foreach($arr_diff['delete'] as $package_name) {
+				echo "* Deleting package: $package_name\n";
 				$sql = "DELETE FROM package WHERE name = ".$db->quote($package_name)." AND category = $category_id;";
 				$db->query($sql);
 			}
@@ -142,6 +146,8 @@
 
 		if(count($arr_diff['insert'])) {
 
+			echo "[$category_name]\n";
+			echo "* New packages: ".count($arr_diff['insert'])."\n";
 
 			/** Package Names **/
 
@@ -156,6 +162,8 @@
 
 				$arr_insert_package[] = '('.implode(', ', $arr_insert_sql).')';
 
+				echo "* $category_name/$package_name\n";
+
 			}
 
 			$sql_insert = "BEGIN;\n";
@@ -165,8 +173,9 @@
 
 			pg_query($sql_insert);
 
-
 			/** Package Changelogs **/
+
+			echo "[Changelogs]\n";
 
 			$arr_insert_sql = array();
 			$arr_insert_changelog = array();
@@ -177,6 +186,9 @@
 				$package_id = current(pg_fetch_row(pg_query($sql)));
 
 				$ch = new PackageChangelog($category_name, $package_name);
+
+				if($ch->valid == false)
+					continue;
 
 				$arr_insert_sql = array(
 					pg_escape_literal($package_id),
@@ -191,12 +203,18 @@
 
 			}
 
-			$sql_insert = "BEGIN;\n";
-			$sql_insert .= "INSERT INTO package_changelog (package, changelog, mtime, hash, filesize, recent_changes) VALUES\n";
-			$sql_insert .= implode(",\n", $arr_insert_changelog).";\n";
-			$sql_insert .= "COMMIT;\n";
+			if(count($arr_insert_changelog)) {
 
-			pg_query($sql_insert);
+				$sql_insert = "BEGIN;\n";
+				$sql_insert .= "INSERT INTO package_changelog (package, changelog, mtime, hash, filesize, recent_changes) VALUES\n";
+				$sql_insert .= implode(",\n", $arr_insert_changelog).";\n";
+				$sql_insert .= "COMMIT;\n";
+
+				echo "$sql_insert\n";
+
+				pg_query($sql_insert);
+
+			}
 
 			foreach($arr_diff['insert'] as $package_name) {
 
