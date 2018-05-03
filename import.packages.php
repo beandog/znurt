@@ -173,46 +173,7 @@
 
 			pg_query($sql_insert);
 
-			/** Package Changelogs **/
-
-			echo "[Changelogs]\n";
-
-			$arr_insert_sql = array();
-			$arr_insert_changelog = array();
-
-			foreach($arr_diff['insert'] as $package_name) {
-
-				$sql = "SELECT id FROM package WHERE category = ".pg_escape_literal($category_id)." AND name = ".pg_escape_literal($package_name).";";
-				$package_id = current(pg_fetch_row(pg_query($sql)));
-
-				$ch = new PackageChangelog($category_name, $package_name);
-
-				if($ch->valid == false)
-					continue;
-
-				$arr_insert_sql = array(
-					pg_escape_literal($package_id),
-					pg_escape_literal($ch->changelog),
-					pg_escape_literal($ch->mtime),
-					pg_escape_literal($ch->hash),
-					pg_escape_literal($ch->filesize),
-					pg_escape_literal($ch->recent_changes),
-				);
-
-				$arr_insert_changelog[] = '('.implode(', ', $arr_insert_sql).')';
-
-			}
-
-			if(count($arr_insert_changelog)) {
-
-				$sql_insert = "BEGIN;\n";
-				$sql_insert .= "INSERT INTO package_changelog (package, changelog, mtime, hash, filesize, recent_changes) VALUES\n";
-				$sql_insert .= implode(",\n", $arr_insert_changelog).";\n";
-				$sql_insert .= "COMMIT;\n";
-
-				pg_query($sql_insert);
-
-			}
+			/** Package Manifests */
 
 			foreach($arr_diff['insert'] as $package_name) {
 
