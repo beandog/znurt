@@ -292,6 +292,18 @@
 							print_r($arr);
 							continue;
 						}
+
+						if(!$e->filesize) {
+							echo "FIXME - empty filesize for ebuild -- non-existant?\n";
+							print_r($arr);
+							continue;
+						}
+
+						if(!$e->hash) {
+							echo "FIXME - empty hash for ebuild -- non-existant?\n";
+							print_r($arr);
+							continue;
+						}
 						
 						$rs = pg_execute('insert_ebuild', array_values($arr));
 						if($rs === false)
