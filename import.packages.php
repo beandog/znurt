@@ -39,6 +39,18 @@
 	require_once 'class.db.package.changelog.php';
 	require_once 'class.db.package.manifest.php';
 
+	$rs = pg_prepare("insert_package", 'INSERT INTO package (category, name, portage_mtime) VALUES ($1, $2, $3);');
+	if($rs === false)
+		echo pg_last_error()."\n";
+
+	$rs = pg_prepare("insert_manifest", 'INSERT INTO package_manifest (package, manifest, mtime, hash, filesize) SELECT p.id, $1, $2, $3, $4 FROM package p INNER JOIN category c ON c.id = $5 AND p.name = $6;');
+	if($rs === false)
+		echo pg_last_error()."\n";
+
+	$rs = pg_prepare("insert_file", 'INSERT INTO package_files (package, filename, type, hash, filesize) SELECT p.id, $1, \'DIST\', $2, $3 FROM package p INNER JOIN category c ON c.id = $4 AND p.name = $5');
+	if($rs === false)
+		echo pg_last_error()."\n";
+
 	// Verify that categories are imported
 	$sql = "SELECT COUNT(1) FROM category;";
 	$count = $db->getOne($sql);
@@ -157,70 +169,65 @@
 			foreach($arr_diff['insert'] as $package_name) {
 
 				$p = new PortagePackage($category_name, $package_name);
+				$mtime = $p->portage_mtime;
 
-				$arr_insert_sql = array(pg_escape_literal($category_id), pg_escape_literal($package_name), pg_escape_literal($p->portage_mtime));
+				echo "[$category_name/$package_name]\n";
+				echo "* Insert new package\n";
+				echo "\n";
 
-				$arr_insert_package[] = '('.implode(', ', $arr_insert_sql).')';
-
-				echo "* $category_name/$package_name\n";
+				$rs = pg_execute("insert_package", array($category_id, $package_name, $mtime));
+				if($rs === false)
+					echo pg_last_error()."\n";
 
 			}
-
-			$sql_insert = "BEGIN;\n";
-			$sql_insert .= "INSERT INTO package (category, name, portage_mtime) VALUES\n";
-			$sql_insert .= implode(",\n", $arr_insert_package).";\n";
-			$sql_insert .= "COMMIT;\n";
-
-			pg_query($sql_insert);
 
 			/** Package Manifests */
 
 			foreach($arr_diff['insert'] as $package_name) {
 
+				echo "[$category_name/$package_name]\n";
+				echo "* Manifest\n";
+
 				$ma = new PackageManifest($category_name, $package_name);
+				$manifest = trim($ma->manifest);
+				$mtime = $ma->mtime;
+				$hash = trim($ma->hash);
+				$filesize = $ma->filesize;
 
-				// New Manifest entry
-				$arr_insert = array(
-					'package' => $package_id,
-					'manifest' => $ma->manifest,
-					'mtime' => $ma->mtime,
-					'hash' => $ma->hash,
-					'filesize' => $ma->filesize,
-				);
-
-				$db->autoExecute('package_manifest', $arr_insert, MDB2_AUTOQUERY_INSERT);
+				$rs = pg_execute("insert_manifest", array($manifest, $mtime, $hash, $filesize, $category_id, $package_name));
+				if($rs === false)
+					echo pg_last_error()."\n";
 
 				// Import package files
 				$arr = $ma->getDistfiles();
 
 				foreach($arr as $filename) {
 
-					$arr_insert = array(
-						'package' => $package_id,
-						'filename' => $filename,
-						'type' => 'DIST',
-						'hash' => $ma->getHash($filename),
-						'filesize' => $ma->getFilesize($filename),
-					);
+					echo "* Filename:\t$filename\n";
+	
+					$hash = $ma->getHash($filename);
+					$hash = trim($hash);
+					$filesize = $ma->getFilesize($filename);
 
-					$db->autoExecute('package_files', $arr_insert, MDB2_AUTOQUERY_INSERT);
+					$rs = pg_execute("insert_file", array($filename, $hash, $filesize, $category_id, $package_name));
+					if($rs === false)
+						echo pg_last_error()."\n";
 
 				}
+
+				echo "\n";
 
 				// Import patches
 				$arr = $ma->getFiles();
 
 				foreach($arr as $filename) {
 
-					$arr_insert = array(
-						'package' => $package_id,
-						'filename' => $filename,
-						'type' => 'AUX',
-						'hash' => $ma->getHash($filename),
-						'filesize' => $ma->getFilesize($filename),
-					);
+					$hash = trim($ma->getHash($filename));
+					$filesize = $ma->getFilesize($filename);
 
-					$db->autoExecute('package_files', $arr_insert, MDB2_AUTOQUERY_INSERT);
+					$rs = pg_execute("insert_file", array($filename, $hash, $filesize, $category_id, $package_name));
+					if($rs === false)
+						echo pg_last_error()."\n";
 
 				}
 
