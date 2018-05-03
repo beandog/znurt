@@ -166,15 +166,13 @@
 		}
 	}
 
+	$count_arr_import = count($arr_import);
 
-	if(count($arr_import)) {
+	if($count_arr_import) {
 
 		foreach($arr_import as $category_name => $arr_category) {
 
 			foreach($arr_category as $package_name) {
-
-				if($debug)
-					shell::msg("[$category_name/$package_name]");
 
 				$arr_insert = array();
 				$arr_delete = array();
@@ -254,8 +252,8 @@
 
 					foreach($arr_insert as $ebuild_name) {
 
-						if($verbose)
-							shell::msg("[insert] $category_name/$ebuild_name");
+						echo "\033[K";
+						echo "import ebuild: $category_name/$package_name/$ebuild_name\r";
 
 						$e = new PortageEbuild("$category_name/$ebuild_name");
 
@@ -292,6 +290,7 @@
 
 							echo "FIXME - package_id is a NULL value\n";
 							print_r($arr);
+							echo "\n";
 							$fixme = true;
 
 						}
@@ -300,18 +299,21 @@
 						if($source = '') {
 							echo "FIXME - couldn't find ebuild filename\n";
 							print_r($arr);
+							echo "\n";
 							$fixme = true;
 						}
 
 						if(!$e->filesize) {
 							echo "FIXME - empty filesize for ebuild -- non-existant?\n";
 							print_r($arr);
+							echo "\n";
 							$fixme = true;
 						}
 
 						if(!$e->hash) {
 							echo "FIXME - empty hash for ebuild -- non-existant?\n";
 							print_r($arr);
+							echo "\n";
 							$fixme = true;
 						}
 
@@ -319,8 +321,10 @@
 							continue;
 
 						$rs = pg_execute('insert_ebuild', array_values($arr));
-						if($rs === false)
+						if($rs === false) {
 							echo pg_last_error()."\n";
+							echo "\n";
+						}
 
 					}
 
@@ -329,6 +333,8 @@
 			}
 
 		}
+
+		echo "\n";
 
 	}
 
