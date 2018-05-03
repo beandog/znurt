@@ -285,6 +285,13 @@
 							'filesize' => $e->filesize,
 							'hash' => $e->hash,
 						);
+
+						// Caught something my regexp can't find -- that is, recompiling the filename from the parsed values didn't work because the file doesn't exist
+						if($source = '') {
+							echo "FIXME - couldn't find ebuild filename\n";
+							print_r($arr);
+							continue;
+						}
 						
 						$rs = pg_execute('insert_ebuild', array_values($arr));
 						if($rs === false)
