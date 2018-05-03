@@ -10,15 +10,25 @@
 	require_once 'class.portage.package.php';
 	require_once 'class.portage.ebuild.php';
 
+	$rs = pg_prepare('insert_ebuild_homepage', 'INSERT INTO ebuild_homepage (ebuild, homepage) VALUES ($1, $2);');
+	if($rs === false)
+		echo pg_last_error()."\n";
+
 	// Find all the ebuilds that are missing ebuild arch
 	$sql = "SELECT ebuild, metadata FROM missing_homepage;";
 	$arr_missing_homepage = $db->getAssoc($sql);
 
-	if($verbose)
-		shell::msg(count($arr)." ebuilds to check");
+	$count = 0;
+	$num_missing = count($arr_missing_homepage);
 
-	if(count($arr_missing_homepage)) {
+	if($num_missing) {
+
 		foreach($arr_missing_homepage as $ebuild => $str) {
+
+			$percent_complete = round((++$count / count($arr_missing_homepage)) * 100);
+			$d_remaining_count = str_pad($count, strlen($num_missing), 0, STR_PAD_LEFT);
+			$d_percent_complete = str_pad($percent_complete, 2, 0, STR_PAD_LEFT)."% ($d_remaining_count/$num_missing)";
+			echo "ebuild homepage: $d_percent_complete\r";
 
 			if(!empty($str)) {
 				$arr = arrHomepages($str);
@@ -31,11 +41,18 @@
 							'homepage' => $url,
 						);
 
-						$db->autoExecute('ebuild_homepage', $arr_insert, MDB2_AUTOQUERY_INSERT);
+						$rs = pg_execute('insert_ebuild_homepage', array_values($arr_insert));
+						if($rs === false) {
+							echo pg_last_error()."\n";
+							echo "Import ebuild_homepage failed:\n";
+							print_r($arr_insert);
+							echo "\n";
+						}
 					}
 				}
 			}
 		}
+		echo "\n";
 	}
 
 	/**
