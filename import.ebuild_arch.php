@@ -9,6 +9,10 @@
 	require_once 'class.portage.category.php';
 	require_once 'class.portage.package.php';
 	require_once 'class.portage.ebuild.php';
+
+	$rs = pg_prepare('insert_ebuild_arch', 'INSERT INTO ebuild_arch (ebuild, arch, status) VALUES ($1, $2, $3);');
+	if($rs === false)
+		echo pg_last_error()."\n";
 	
  	$verbose = true;
 // 	$qa = true;	
@@ -48,13 +52,22 @@
 				foreach($arr as $arch => $status) {
 				
 					if($db_arches[$arch]) {
+
+						$ebuild_arch = $db_arches[$arch];
+						
 						$arr_insert = array(
 							'ebuild' => $ebuild,
 							'arch' => $db_arches[$arch],
 							'status' => $status,
 						);
-						
-						$db->autoExecute('ebuild_arch', $arr_insert, MDB2_AUTOQUERY_INSERT);
+
+						$rs = pg_execute('insert_ebuild_arch', array($ebuild, $ebuild_arch, $status));
+						if($rs === false) {
+							echo pg_last_error()."\n";
+							echo "import ebuild arch failed:\n";
+							print_r($arr_insert);
+						}
+
 					}
 				}
 			}
