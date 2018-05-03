@@ -50,9 +50,16 @@
 	require_once 'class.portage.package.php';
 	require_once 'class.portage.ebuild.php';
 	require_once 'class.db.ebuild.php';
+
+	$rs = pg_prepare('insert_ebuild', 'INSERT INTO ebuild (package, pf, pv, pr, pvr, alpha, beta, pre, rc, p, version, slot, portage_mtime, cache_mtime, status, udate, source, filesize, hash) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19);');
+	if($rs === false)
+		echo pg_last_error()."\n";
+
 	
 	$sql = "DELETE FROM ebuild WHERE status > 0;";
-	$db->query($sql);
+	$rs = pg_query($sql);
+	if($rs === false)
+		echo pg_last_error()."\n";
 	
 	// Check to see if there are any ebuilds
 	$sql = "SELECT COUNT(1) FROM ebuild WHERE status = 0;";
@@ -80,7 +87,9 @@
 	// If no ebuilds, reset the sequence
 	if($count === "0") {
 		$sql = "ALTER SEQUENCE ebuild_id_seq RESTART WITH 1;";
-		$db->query($sql);
+		$rs = pg_query($sql);
+		if($rs === false)
+			echo pg_last_error()."\n";
 	}
 	
 	$categories = $tree->getCategories();
@@ -277,9 +286,10 @@
 							'hash' => $e->hash,
 						);
 						
-						$db->autoExecute('ebuild', $arr, MDB2_AUTOQUERY_INSERT);
-						
-						
+						$rs = pg_execute('insert_ebuild', array_values($arr));
+						if($rs === false)
+							echo pg_last_error()."\n";
+
 					}
 					
 				}
@@ -294,14 +304,20 @@
 	
 	// Update the package_recent entries
 	$sql = "DELETE FROM package_recent WHERE status = 1;";
-	$db->query($sql);
+	$rs = pg_query($sql);
+	if($rs === false)
+		echo pg_last_error()."\n";
 	
 	$sql = "INSERT INTO package_recent SELECT DISTINCT package, MAX(cache_mtime), 1 AS status FROM ebuild e GROUP BY package ORDER BY MAX(cache_mtime) DESC, package;";
-	$db->query($sql);
+	$rs = pg_query($sql);
+	if($rs === false)
+		echo pg_last_error()."\n";
 	
 	// Same for the arches
 	$sql = "INSERT INTO package_recent_arch SELECT DISTINCT package, MAX(cache_mtime), 1 AS status, ea.arch FROM ebuild e LEFT OUTER JOIN ebuild_arch ea ON ea.ebuild = e.id WHERE ea.arch IS NOT NULL AND ea.status != 2 GROUP BY package, ea.arch ORDER BY MAX(cache_mtime) DESC, package;";
-	$db->query($sql);
+	$rs = pg_query($sql);
+	if($rs === false)
+		echo pg_last_error()."\n";
 	
-	
+
 ?>
