@@ -65,7 +65,6 @@
 
 		// File mtimes
 		private $portage_mtime;
-		private $changelog_mtime;
 		private $metadata_mtime;
 		private $cache_mtime;
 

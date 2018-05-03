@@ -93,10 +93,6 @@
 				$this->portage_mtime = filemtime($dir);
 			}
 
-			if(file_exists($this->package_dir."/ChangeLog")) {
-				$this->changelog_filename = $this->package_dir."/ChangeLog";
-			}
-
 			if(file_exists($this->package_dir."/metadata.xml")) {
 				$this->metadata_filename = $this->package_dir."/metadata.xml";
 			}
