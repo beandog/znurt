@@ -181,7 +181,10 @@
 						break;
 
 					case 'source':
-						return $this->source = file_get_contents($this->filename);
+						$this->source = '';
+						if(file_exists($this->filename))
+							$this->source = file_get_contents($this->filename);
+						return $this->source;
 						break;
 
 					case 'hash':
