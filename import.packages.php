@@ -210,8 +210,6 @@
 				$sql_insert .= implode(",\n", $arr_insert_changelog).";\n";
 				$sql_insert .= "COMMIT;\n";
 
-				echo "$sql_insert\n";
-
 				pg_query($sql_insert);
 
 			}
