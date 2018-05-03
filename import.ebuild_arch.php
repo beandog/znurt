@@ -5,7 +5,7 @@
 	if(!$tree) {
 		$tree =& PortageTree::singleton();
 	}
-
+		
 	require_once 'class.portage.category.php';
 	require_once 'class.portage.package.php';
 	require_once 'class.portage.ebuild.php';
