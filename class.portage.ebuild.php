@@ -485,11 +485,10 @@
 
 		public function getFilesize() {
 
-			if(!$this->filesize) {
-				$this->filesize = filesize($this->filename);
-			}
-
-			return $this->filesize;
+			if(is_null($this->filesize) && file_exists($this->filename))
+				return $this->filesize = filesize($this->filename);
+			else
+				return $this->filesize = 0;
 
 		}
 
