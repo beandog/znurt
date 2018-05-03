@@ -5,43 +5,40 @@
 	/**
 	 * The procedure to update an ebuild is this -- remove the old one, and insert the new one.
 	 * This is actually much simpler than trying to update everything *and* it allows the
-	 * website to constantly keep a snapshot of it's current status regardless of backend
+	 * website to constantly keep a snapshot of its current status regardless of backend
 	 * activity.
 	 *
 	 * To distinguish between new and updated ebuilds in the database, post-run, the updated
-	 * ebuilds will have a non-null value for the "udate" (update date) column.  New
+	 * ebuilds will have a non-null value for the "udate" (update date) column. New
 	 * ebuilds will have a null value.
 	 */
 
 	/**
-	 * Right now this will run fine is run as a cron job.  It will clean up after itself
+	 * Right now this will run fine is run as a cron job. It will clean up after itself
 	 * if there are NO ebuilds in the tree, but if you accidentally remove an entire package
 	 * or something, it will still only insert what's new (recently modified since last mtime).
 	 * For now, you're going to have to manually flip some bits to get it to correct mistakes
-	 * like that.  It's too much of a pain to have it check for it (at this point).
+	 * like that. It's too much of a pain to have it check for it (at this point).
 	 */
 	
 	 /**
-	  * This script is similar to the package one, in that it will create a temporary file
-	  * and set the mtime to the last package, and then look for any new changes.  Makes the
-	  * find utility do all the heavy lifting, and is much simpler.
-	  *
-	  * Also, this updates the DB with the mtime of both the actual ebuild and the cache file.
-	  * It seems like they are usually the same mtime, though.
-	  *
-	  * While it may seem odd, any time an ebuild is "changed" (as in, the mtime is different), it is
-	  * actually re-inserted as a new ebuild all over again.  It would be too much work to go
-	  * through all the scripts and compare differences between old and new data; it is far easier to
-	  * simply re-import the data as if it was newly created.  New ebuilds are flagged with a status of 1
-	  * and should be ignored by the website.  Unchanged ebuilds are flagged with a status of 0 and ones
-	  * marked for removal with a 2.  The website should always pull the ones where the status is 0 or 2.
-	  *
-	  */
+	 * This script is similar to the package one, in that it will create a temporary file
+	 * and set the mtime to the last package, and then look for any new changes. Makes the
+	 * find utility do all the heavy lifting, and is much simpler.
+	 *
+	 * Also, this updates the DB with the mtime of both the actual ebuild and the cache file.
+	 * It seems like they are usually the same mtime, though.
+	 *
+	 * While it may seem odd, any time an ebuild is "changed" (as in, the mtime is different), it is
+	 * actually re-inserted as a new ebuild all over again. It would be too much work to go
+	 * through all the scripts and compare differences between old and new data; it is far easier to
+	 * simply re-import the data as if it was newly created. New ebuilds are flagged with a status of 1
+	 * and should be ignored by the website. Unchanged ebuilds are flagged with a status of 0 and ones
+	 * marked for removal with a 2. The website should always pull the ones where the status is 0 or 2.
+	 *
+	 */
 
-    	$verbose = true;
-//   	$debug = false;
-//   	$all = false;
-	
+	$verbose = true;
 
 	require_once 'header.php';
 	
