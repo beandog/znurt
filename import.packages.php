@@ -33,10 +33,8 @@
 
 	require_once 'class.portage.category.php';
 	require_once 'class.portage.package.php';
-	require_once 'class.portage.package.changelog.php';
 	require_once 'class.portage.package.manifest.php';
 	require_once 'class.db.package.php';
-	require_once 'class.db.package.changelog.php';
 	require_once 'class.db.package.manifest.php';
 
 	$rs = pg_prepare("insert_package", 'INSERT INTO package (category, name, portage_mtime) VALUES ($1, $2, $3);');
@@ -135,9 +133,11 @@
 		$num_packages = count($arr_packages);
 		$counter_categories = str_pad($counter_categories, strlen($num_categories), 0, STR_PAD_LEFT);
 
-		$counter_categories++;
+		$percent_complete = round((++$counter_categories / $num_categories) * 100);
+		$d_remaining_count = str_pad($counter_categories, strlen($num_categories), 0, STR_PAD_LEFT);
+		$d_percent_complete = str_pad($percent_complete, 2, 0, STR_PAD_LEFT)."% ($d_remaining_count/$num_categories)";
 
-		echo "import category: $category_name\r";
+		// echo "import category: $category_name\r";
 		$arr_diff = importDiff('package', $arr_packages, "category = $category_id");
 
 		// FIXME Flag to be deleted, execute later
@@ -164,7 +164,7 @@
 			foreach($arr_diff['insert'] as $package_name) {
 
 				echo "\033[K";
-				echo "import packages: $category_name/$package_name\r";
+				echo "import packages: $d_percent_complete category: $category_name package: $package_name - add package\r";
 
 				$p = new PortagePackage($category_name, $package_name);
 				$mtime = $p->portage_mtime;
@@ -180,7 +180,7 @@
 			foreach($arr_diff['insert'] as $package_name) {
 
 				echo "\033[K";
-				echo "import packages: $category_name/$package_name (manifests)\r";
+				echo "import packages: $d_percent_complete category: $category_name package: $package_name - manifests\r";
 
 				$ma = new PackageManifest($category_name, $package_name);
 				$manifest = trim($ma->manifest);
@@ -211,7 +211,7 @@
 				$arr = $ma->getFiles();
 
 				echo "\033[K";
-				echo "import packages: $category_name/$package_name (patches)\r";
+				echo "import packages: $d_percent_complete category: $category_name package: $package_name - patches\r";
 
 				foreach($arr as $filename) {
 
@@ -256,9 +256,6 @@
 						shell::msg("Updating $category_name/$package_name id: $package_id");
 					}
 
-					$changelog = new PackageChangelog($category_name, $package_name, $tree->getTree());
-					$db_changelog = new DBPackageChangelog($package_id);
-
 					// If the hash of this Manifest file changed, then a file
 					// somewhere has been added, deleted or modified.  Flag the status
 					// to make sure we examine that directory later.
@@ -269,17 +266,6 @@
 					$db_manifest->manifest = $manifest->manifest;
 					$db_manifest->mtime= $manifest->mtime;
 					$db_manifest->filesize = $manifest->filesize;
-
-					// Same for the changelog entry if it's changed on the filesystem.
-					// FIXME Add metadata.xml as well
-					if($changelog->hash != $db_changelog->hash) {
-						$db_changelog->hash = $changelog->hash;
-						$db_changelog->manifest = $changelog->manifest;
-						$db_changelog->mtime= $changelog->mtime;
-						$db_changelog->filesize = $changelog->filesize;
- 						$db_changelog->changelog = $changelog->changelog;
- 						$db_changelog->recent_changes = $changelog->recent_changes;
-					}
 
 					// FIXME hopefully can phase out mtime soon.
 					if($p->portage_mtime != $db_package->portage_mtime) {
