@@ -1,5 +1,9 @@
 <?php
 
+	// FIXME this runs way too slow. The reason is because there's an index on the database
+	// for unique ebuild ID and homepage string. The code should check it for duplicate
+	// values instead, and drop the database constraint.
+
 	echo "[Ebuild Homepages]\n";
 
 	require_once 'header.php';
