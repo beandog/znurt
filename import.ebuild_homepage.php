@@ -1,5 +1,7 @@
 <?php
 
+	echo "[Ebuild Homepages]\n";
+
 	require_once 'header.php';
 
 	if(!$tree) {
@@ -28,7 +30,7 @@
 			$percent_complete = round((++$count / count($arr_missing_homepage)) * 100);
 			$d_remaining_count = str_pad($count, strlen($num_missing), 0, STR_PAD_LEFT);
 			$d_percent_complete = str_pad($percent_complete, 2, 0, STR_PAD_LEFT)."% ($d_remaining_count/$num_missing)";
-			echo "ebuild homepage: $d_percent_complete\r";
+			echo "Progress: $d_percent_complete\r";
 
 			if(!empty($str)) {
 				$arr = arrHomepages($str);
