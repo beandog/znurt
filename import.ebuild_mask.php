@@ -1,8 +1,6 @@
 <?php
 
-// 	$verbose = true;
-// 	$debug = true;
-// 	$qa = true;
+	echo "[Ebuild Masks]\n";
 
 	// There's no real need for a status column here,
 	// since they won't show up unless the ebuild is completed importing
