@@ -1,5 +1,7 @@
 <?php
 
+	echo "[Expand USE Flags]\n";
+
 	require_once 'header.php';
 
 	if(!$tree) {
