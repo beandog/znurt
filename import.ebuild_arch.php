@@ -1,5 +1,7 @@
 <?php
 
+	echo "[Ebuild Arches]\n";
+
 	require_once 'header.php';
 
 	if(!$tree) {
@@ -25,12 +27,21 @@
 	$db_arches = $db->getAssoc("SELECT name, id FROM arch ORDER BY arch;");
 
 	//FIXME rewrite this entire thing in SQL
-	if(count($arr_missing_arch)) {
+	$num_missing_arches = count($arr_missing_arch);
+
+	if($num_missing_arches) {
 
 		$x = 1;
 		$count = count($arr_missing_arch);
 
 		foreach($arr_missing_arch as $ebuild => $keywords) {
+
+			$percent_complete = round(($x / $num_missing_arches) * 100);
+			$d_remaining_count = str_pad($x, strlen($num_missing_arches), 0, STR_PAD_LEFT);
+			$d_percent_complete = str_pad($percent_complete, 2, 0, STR_PAD_LEFT)."% ($d_remaining_count/$num_missing_arches)";
+
+			echo "\033[K";
+			echo "* Progress: $d_percent_complete\r";
 
 			$x++;
 
@@ -64,6 +75,7 @@
 				}
 			}
 		}
+		echo "\n";
 	}
 
 	/**
