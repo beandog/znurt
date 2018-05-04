@@ -50,8 +50,6 @@
 	foreach($arr_import as $key => $arr) {
 		if($$key) {
 			foreach($arr as $file) {
-  				if($verbose)
-					echo "[import] $file\n";
 
 				if(is_dir("/tmp/znurt") && is_writable("/tmp/znurt")) {
 					file_put_contents("/tmp/znurt/status", "$file\n");
