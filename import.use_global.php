@@ -39,8 +39,14 @@
 
  	foreach($arr_use_flags[$type] as $name => $arr) {
 
+		echo "\033[K";
+		echo "* Progress: $name\r";
+
  		$dbuse = new DBUse($name, $type);
  		if($dbuse->description != $arr['description'])
  			$dbuse->description = $arr['description'];
  	}
+
+	echo "\n";
+
  ?>
