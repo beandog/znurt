@@ -1,5 +1,7 @@
 <?php
 
+	echo "[Categories]\n";
+
 	require_once 'header.php';
 
 	$tree =& PortageTree::singleton();

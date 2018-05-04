@@ -1,5 +1,7 @@
 <?php
 
+	echo "[Herds]\n";
+
 	require_once 'header.php';
 
 	if(!$tree) {

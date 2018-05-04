@@ -1,5 +1,7 @@
 <?php
 
+	echo "[Eclasses]\n";
+
 	require_once 'header.php';
 
 	if(!$tree) {

@@ -1,5 +1,7 @@
 <?php
 
+	echo "[Licenses]\n";
+
 	require_once 'header.php';
 
 	if(!$tree) {

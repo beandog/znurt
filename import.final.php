@@ -1,5 +1,7 @@
 <?php
 
+	echo "[Finish Import]\n";
+
 	require_once 'header.php';
 
 	// Reset packages that were updated

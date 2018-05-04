@@ -1,5 +1,7 @@
 <?php
 
+	echo "[Bugzilla]\n";
+
 	/**
 	 * The bugzilla script grabs a CSV export from Gentoo's bugzilla and inserts them into the database.
 	 *

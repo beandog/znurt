@@ -1,5 +1,7 @@
 <?php
 
+	echo "[Start Import]\n";
+
 	require_once 'header.php';
 
 	// Had it choke out on me when starting from scratch

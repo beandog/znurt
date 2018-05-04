@@ -1,5 +1,7 @@
 <?php
 
+	echo "[Packages]\n";
+
 	/**
 	 * This script creates a temporary file in /tmp named znurt[foo] that sets itself
 	 * to the mtime of the latest package mtime in the database.  This way, I can simply

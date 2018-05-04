@@ -1,5 +1,7 @@
 <?php
 
+	echo "[Ebuilds]\n";
+
 	// FIXME not sure if the whole udate thing is working -- need it for a "new ebuilds" query
 
 	/**

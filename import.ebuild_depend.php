@@ -1,5 +1,7 @@
 <?php
 
+	echo "[Ebuild Dependencies]\n";
+
 	require_once 'header.php';
 
 // 	$sql = "SELECT REGEXP_SPLIT_TO_TABLE(value, E'(\\\\(|\\\\))') AS value FROM ebuild_metadata WHERE keyword IN ('depend', 'rdepend') LIMIT 22;";
