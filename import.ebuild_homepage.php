@@ -4,6 +4,8 @@
 	// for unique ebuild ID and homepage string. The code should check it for duplicate
 	// values instead, and drop the database constraint.
 
+	// FIXME do multi-value inserts, all one ebuild at once
+
 	echo "[Ebuild Homepages]\n";
 
 	require_once 'header.php';

@@ -1,5 +1,7 @@
 <?php
 
+	// FIXME do multi-value inserts, all one ebuild at once
+
 	echo "[Ebuild Arches]\n";
 
 	require_once 'header.php';
