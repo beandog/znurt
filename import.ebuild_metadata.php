@@ -1,9 +1,6 @@
 <?php
 
- 	$verbose = true;
-// 	$qa = true;
-
- 	// $debug = true;
+	echo "[Ebuild Metadata]\n";
 
 	/**
 	 * It may seem a little odd, and to break normalization, to have a query to set the description on the package
@@ -22,24 +19,36 @@
 	require_once 'class.portage.package.php';
 	require_once 'class.portage.ebuild.php';
 
+	// Postgres
+	$rs = pg_prepare('insert_ebuild_metadata', 'INSERT INTO ebuild_metadata (ebuild, keyword, value) VALUES ($1, $2, $3);');
+	if($rs === false) {
+		echo pg_last_error();
+		echo "\n";
+	}
+
 	// Find all the ebuilds that are missing ebuild arch
 	$sql = "SELECT * FROM missing_metadata ORDER BY category_name, package_name, pf;";
 	$arr = $db->getAll($sql);
+	$num_ebuilds = count($arr);
+	$d_num_ebuilds = number_format($num_ebuilds);
 
-	if($verbose)
-		shell::msg(number_format(count($arr))." ebuilds to check");
+	echo "* Remaining # of ebuilds to check: $d_num_ebuilds\n";
 
 	$total = count($arr);
 	$count = 0;
 
 	foreach($arr as $row) {
+
 		extract($row);
 
 		$e = new PortageEbuild("$category_name/$pf");
 
-		shell::msg("$category_name/$e ($count/$total)");
+		$percent_complete = round(($count / $num_ebuilds) * 100);
+		$d_remaining_count = str_pad($count, strlen($num_ebuilds), 0, STR_PAD_LEFT);
+		$d_percent_complete = str_pad($percent_complete, 2, 0, STR_PAD_LEFT)."% ($d_remaining_count/$num_ebuilds)";
+
 		echo "\033[K";
-		echo "$category_name/$e ($count/$total)\r";
+		echo "* Progress: $d_percent_complete $category_name/$e\r";
 
 		$arr_metadata = $e->metadata();
 
@@ -54,41 +63,34 @@
 						'value' => $value,
 					);
 
-					$db->autoExecute('ebuild_metadata', $arr_insert, MDB2_AUTOQUERY_INSERT);
+					pg_execute('insert_ebuild_metadata', array_values($arr_insert));
+					if($rs === false) {
+						echo pg_last_error();
+						echo "\n";
+					}
 				}
 			}
-		} else {
-			if($verbose || $qa)
-				shell::msg("[QA] No metadata: $category_name/".$e->pf);
 		}
 
 		$count++;
 
 	}
 
-	echo "\n";
-
 	// Set the new package descriptions
 	$sql = "SELECT COUNT(1) FROM package WHERE status = 1 OR description = '';";
 	$count = $db->getOne($sql);
 	$total = 1;
-	if($count) {
-		if($verbose)
-			shell::msg("Setting the new package descriptions for $count packages");
+	echo "* Update package descriptions\n";
+	echo "* Processing query in background, package.description will be empty until finished\n";
+	// This will take a very long time, so throw it to run off asynchronously
 
-		$sql = "SELECT p.id FROM package p INNER JOIN package_recent pr ON pr.package = p.id WHERE (p.status = 1 AND p.portage_mtime = pr.max_ebuild_mtime) OR p.description = '';";
-		$arr = $db->getCol($sql);
-		foreach($arr as $package_id) {
-
-			if($verbose)
-				echo "$total/$count\n";
-			$total++;
-
-			$sql = "UPDATE package SET description = package_description(id) WHERE id = $package_id;";
-			$db->query($sql);
-		}
-		// $sql = "UPDATE package SET description = package_description(id) WHERE id IN (SELECT p.id FROM package p INNER JOIN package_recent pr ON pr.package = p.id WHERE (p.status = 1 AND p.portage_mtime = pr.max_ebuild_mtime) OR p.description = '');";
-		// $db->query($sql);
+	$sql = "UPDATE package SET description = package_description(id) WHERE id IN (SELECT id FROM package WHERE description = '');";
+	$bool = pg_send_query($pg, $sql);
+	if($bool === false) {
+		echo "* Running $sql failed\n";
+		$rs = pg_get_result();
+		var_dump($rs);
+		echo "\n";
 	}
 
 ?>
