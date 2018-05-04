@@ -47,7 +47,8 @@
 
 	}
 
-	echo "\n";
+	if($count_packages)
+		echo "\n";
 
 // 	print_r($arr_packages);
 
