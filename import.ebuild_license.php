@@ -1,4 +1,5 @@
 <?php
+	echo "[Ebuild Licenses]\n";
 
 	require_once 'header.php';
 
@@ -10,6 +11,10 @@
 	require_once 'class.portage.package.php';
 	require_once 'class.portage.ebuild.php';
 
+	$rs = pg_prepare('insert_ebuild_license', 'INSERT INTO ebuild_license (ebuild, license) VALUES ($1, $2);');
+	if($rs === false)
+		echo pg_last_error()."\n";
+
 	// Get the arches
 	$arr_licenses = $tree->getLicenses();
 
@@ -17,7 +22,7 @@
 	$sql = "SELECT ebuild, metadata FROM missing_license;";
 	$arr_missing_license = $db->getAssoc($sql);
 
-	shell::msg(count($arr_missing_license)." ebuilds to check");
+	echo "* Ebuilds: ".count($arr_missing_license)."\n";
 
 	// Get the licenses from the database
 	$db_licenses = $db->getAssoc("SELECT name, id FROM license;");
@@ -29,7 +34,8 @@
 
 		foreach($arr_missing_license as $ebuild => $str) {
 
-			shell::msg("$x/$count");
+			echo "\033[K";
+			echo "* Progress: $x/$count\r";
 			$x++;
 
 			if(!empty($str)) {
@@ -42,8 +48,10 @@
 								'ebuild' => $ebuild,
 								'license' => $db_licenses[$str],
 							);
+							$rs = pg_execute('insert_ebuild_license', array($ebuild, $db_licenses[$str]));
+							if($rs === false)
+								echo pg_last_error()."\n";
 
-							$db->autoExecute('ebuild_license', $arr_insert, MDB2_AUTOQUERY_INSERT);
 						}
 					}
 				}
