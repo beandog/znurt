@@ -1,12 +1,12 @@
 <?php
 
-// 	$verbose = true;
-// 	$qa = true;
+	echo "[Ebuild Extended Versions]\n";
 
 	require_once 'header.php';
 	require_once 'import.functions.php';
 
 	// Also fix the levels
+	echo "* Fixing levels\n";
 	$sql = "UPDATE ebuild e SET lvl = CASE
             WHEN e.p IS NOT NULL THEN 6
             WHEN e.rc IS NOT NULL THEN 4
@@ -27,7 +27,12 @@
 		$arr_packages[$package][$ebuild] = $version;
 	}
 
+	$count_packages = count($arr_packages);
+
 	foreach($arr_packages as $package => $arr) {
+
+		echo "\033[K";
+		echo "* Progress: $package/$count_packages\r";
 
 // 		print_r($arr);
 
@@ -41,6 +46,8 @@
 		}
 
 	}
+
+	echo "\n";
 
 // 	print_r($arr_packages);
 
