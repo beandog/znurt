@@ -108,12 +108,11 @@
 		$portage = $tree->getTree();
 		$cache = $tree->getTree()."/metadata/md5-cache/";
 
-		$tmp = tempnam('/tmp', 'znurt');
+		$tmp = tempnam('/tmp', 'znurt.md5-cache.timestamp.');
 		touch($tmp, $min);
 
-		$exec = "find $cache -type f -newer $tmp";
+		$exec = "find $cache -mindepth 2 -type f -! -name Manifest.gz -newer $tmp";
 		$arr = shell::cmd($exec);
- 		unlink($tmp);
 
 		if($verbose) {
 			shell::msg($exec);
