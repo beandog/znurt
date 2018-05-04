@@ -1,5 +1,7 @@
 <?php
 
+	echo "[Local USE Flags]\n";
+
 	require_once 'header.php';
 
 	if(!$tree) {
