@@ -1,5 +1,7 @@
 <?php
 
+	echo "[Global USE Flags]\n";
+
 	require_once 'header.php';
 	require_once 'class.portage.tree.php';
 	require_once 'class.portage.use_flag.php';
