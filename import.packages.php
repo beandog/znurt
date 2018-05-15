@@ -32,10 +32,10 @@
 
 	// Verify that categories are imported
 	$sql = "SELECT COUNT(1) FROM category;";
-	$count = $db->getOne($sql);
-	if($count === '0') {
-		die("There are no categories in the database. Import those before importing packages.\n");
-		exit;
+	$count = current(pg_fetch_row(pg_query($sql)));
+	if(!$count) {
+		echo "* No categories in the database\n";
+		goto end_packages;
 	}
 
 	$portage_tree = $tree->getTree();
@@ -258,5 +258,7 @@
 		$sql = "ALTER SEQUENCE package_id_seq RESTART WITH 1;";
 		$db->query($sql);
 	}
+
+	end_packages:
 
 ?>
