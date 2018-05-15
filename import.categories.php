@@ -4,54 +4,67 @@
 
 	require_once 'header.php';
 
-	$tree =& PortageTree::singleton();
+	if(!$tree) {
+		$tree =& PortageTree::singleton();
+	}
 
 	require_once 'class.portage.category.php';
 
-	$sql = "SELECT COUNT(1) FROM category;";
-	$count = $db->getOne($sql);
+	// Get and display Portage's categories
+	$a_tree_categories = $tree->getCategories();
+	$i_tree_categories = count($a_tree_categories);
+	echo "* Larry:	$i_tree_categories\n";
 
-	// If no categories, reset the sequence
-	if($count === "0") {
+	// Get and display Znurt's categories
+	$sql = "SELECT name FROM category ORDER BY name;";
+	$a_znurt_categories = pg_column_array(pg_fetch_all(pg_query($sql)));
+	$i_znurt_categories = count($a_znurt_categories);
+	echo "* Znurt:	$i_znurt_categories\n";
+
+	// Get the difference between the two sets and display changes
+	$a_import_diff = importDiff('category', $a_tree_categories);
+	$i_insert_count = count($a_import_diff['insert']);
+	echo "* Insert:	$i_insert_count\n";
+	$i_delete_count = count($a_import_diff['delete']);
+	echo "* Delete:	$i_delete_count\n";
+
+	// Reset sequence if table is empty
+	if(!$i_znurt_categories) {
 		$sql = "ALTER SEQUENCE category_id_seq RESTART WITH 1;";
-		$db->query($sql);
+		pg_query($sql);
 	}
 
-	$arr = $tree->getCategories();
-
-	$arr_diff = importDiff('category', $arr);
-
-	if(count($arr_diff['delete'])) {
-		foreach($arr_diff['delete'] as $name) {
-			$sql = "DELETE FROM category WHERE name = ".$db->quote($name).";";
-			shell::msg($sql);
-			$db->query($sql);
-		}
+	// Delete removed categories
+	foreach($a_import_diff['delete'] as $str) {
+		$q_str = pg_escape_literal($str);
+		$sql = "DELETE FROM category WHERE name = $q_str;";
+		pg_query($sql);
 	}
 
-	if(count($arr_diff['insert'])) {
-		foreach($arr_diff['insert'] as $name) {
-			$arr_insert = array('name' => $name);
-			$db->autoExecute('category', $arr_insert, MDB2_AUTOQUERY_INSERT);
+	// Insert new categories
+	$import_counter = 1;
+	foreach($a_import_diff['insert'] as $str) {
 
-			$category_id = $db->lastInsertID();
+		echo "\033[K";
+		echo "* Progress:	$import_counter/$i_insert_count\r";
+		$import_counter++;
 
-			$c = new PortageCategory($name);
+		$q_str = pg_escape_literal($str);
+		$sql = "INSERT INTO category (name) VALUES ($q_str);";
+		pg_query($sql);
 
-			foreach($c->getDescriptions() as $lingua => $description) {
+		$c = new PortageCategory($str);
 
-				$arr_insert = array(
-					'category' => $category_id,
-					'lingua' => $lingua,
-					'description' => $description,
-				);
+		foreach($c->getDescriptions() as $lingua => $description) {
 
-				$db->autoExecute('category_description', $arr_insert, MDB2_AUTOQUERY_INSERT);
+			$q_lingua = pg_escape_literal($lingua);
+			$q_description = pg_escape_literal($description);
 
-			}
+			$sql = "INSERT INTO category_description (category, lingua, description) SELECT id, $q_lingua, $q_description FROM category WHERE name = $q_str;";
+
+			pg_query($sql);
 
 		}
-
 	}
 
 ?>
