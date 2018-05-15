@@ -3,20 +3,10 @@
 	echo "[Packages]\n";
 
 	/**
-	 * This script creates a temporary file in /tmp named znurt[foo] that sets itself
-	 * to the mtime of the latest package mtime in the database.  This way, I can simply
-	 * use find to do all the heavy lifting to quickly locate any package directories
-	 * that were modified since last import.
+	 * Insert and update category packages
 	 *
-	 * Directory names in portage tend to get their mtimes updated on a regular basis;
-	 * generally speaking, I'd say that about 50% of them change each sync, though
-	 * I can't pin down why.  Packages that haven't been touched in ages get their
-	 * directory modified for no reason I can see.
-	 *
-	 * As a result, the mtime of a package is notoriously unreliable as a reference
-	 * for anything.  However, if it does change, it *can* indicate that an ebuild or
-	 * file was removed, so, with all due diligence, we will check those later to see
-	 * if something was actually taken away, and update the database.
+	 * Check the category/package Manifest to determine if there has been a change
+	 * to a package or not.
 	 */
 
 	/**
@@ -44,7 +34,7 @@
 	$sql = "SELECT COUNT(1) FROM category;";
 	$count = $db->getOne($sql);
 	if($count === '0') {
-		die("There are no categories in the database.  Import those before importing packages.\n");
+		die("There are no categories in the database. Import those before importing packages.\n");
 		exit;
 	}
 
@@ -53,6 +43,7 @@
 	if(!isset($a_larry_categories))
 		$a_larry_categories = $tree->getCategories();
 
+	// Get the package Manifest files
 	$retval = -1;
 	$a_package_manifest_hashes = array();
 	$find_out_filename = "/tmp/znurt.find.out";
@@ -63,6 +54,7 @@
 
 	$a_larry_cps = array();
 
+	// Get the hashes of the Manifest files
 	foreach($file_contents as $filename) {
 
 		$arr = explode('/', $filename);
@@ -72,7 +64,6 @@
 
 		$package_name = array_pop($arr);
 		$category_name = array_pop($arr);
-
 
 		// Skip Larry directories like 'metadata/glsa'
 		if(!in_array($category_name, $a_larry_categories))
@@ -87,9 +78,11 @@
 
 	}
 
-	// Display package count
+	// Display package count in portage
 	$i_larry_packages = count($a_larry_cps);
 	echo "* Larry:	$i_larry_packages\n";
+
+	// Display package count in database
 	$sql = "SELECT COUNT(1) FROM package;";
 	$i_znurt_packages = current(pg_fetch_row(pg_query($sql)));
 	echo "* Znurt:	$i_znurt_packages\n";
@@ -97,9 +90,12 @@
 	// Get the existing category => package names from the database
 	$sql = "SELECT category_name, package_name FROM view_package;";
 	$rs = pg_query($sql);
+
 	$a_znurt_cps = array();
+
 	while($row = pg_fetch_assoc($rs)) {
-		$a_znurt_cps[] = $row['category_name']."/".$row['package_name'];
+		$cp = $row['category_name']."/".$row['package_name'];
+		$a_znurt_cps[] = $cp;
 	}
 
 	// Find packages to insert and delete
