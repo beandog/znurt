@@ -54,9 +54,6 @@
 		$a_larry_categories = $tree->getCategories();
 
 	$retval = -1;
-	$a_output = array();
-	$a_package_manifests = array();
-	$a_package_manifest_files = array();
 	$a_package_manifest_hashes = array();
 	$find_out_filename = "/tmp/znurt.find.out";
 	$str = "find $portage_tree -mindepth 3 -maxdepth 3 -type f -name Manifest > $find_out_filename";
