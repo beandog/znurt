@@ -40,8 +40,6 @@
 	 *
 	 */
 
-	$verbose = true;
-
 	require_once 'header.php';
 
 	if(!$tree) {
@@ -223,8 +221,7 @@
 					// FIXME just pass the IDs
 					if(count($arr_delete)) {
 						foreach($arr_delete as $ebuild_name) {
-							if($verbose)
-								shell::msg("[delete] $category_name/$ebuild_name");
+							shell::msg("[delete] $category_name/$ebuild_name");
 
 							$ebuild = $arr_ebuild_ids[$category_name][$package_name][$ebuild_name];
 
