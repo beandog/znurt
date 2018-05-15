@@ -48,4 +48,19 @@
 	require_once 'class.portage.tree.php';
 	$tree =& PortageTree::singleton();
 
+	// A helper script to return an array of one column's values
+	function pg_column_array($result_array) {
+
+		if(!is_array($result_array))
+			return array();
+
+		$column_array = array();
+
+		foreach($result_array as $row)
+			$column_array[] = current($row);
+
+		return $column_array;
+
+	}
+
 ?>
