@@ -114,10 +114,8 @@
 		$exec = "find $cache -mindepth 2 -type f -! -name Manifest.gz -newer $tmp";
 		$arr = shell::cmd($exec);
 
-		if($verbose) {
-			shell::msg($exec);
-			shell::msg("(".count($arr).") new/updated ebuilds found since last sync.");
-		}
+		$num_updated_ebuilds = count($arr);
+		echo "* new/updated ebuilds found since last sync: $num_updated_ebuilds\n";
 
 		foreach($arr as $dir) {
 			$atom = str_replace($tree->getTree()."/metadata/md5-cache/", "", $dir);
@@ -147,12 +145,6 @@
 			$arr_import[$name] = $c->getPackages();
 		}
 
-	}
-
-	if($debug || $all) {
-		shell::msg("Checking ALL categories");
-	} elseif($verbose) {
-		shell::msg("(".count($arr_import).") RECENTLY MODIFIED categories ");
 	}
 
 	// Get the package IDs for reference
@@ -220,9 +212,9 @@
 									// right away, and avoid having it run twice.
  									$db_ebuild->status = 2;
 
-									if($verbose) {
-										shell::msg("[update] $category_name/$ebuild_name");
-									}
+									echo "\033[K";
+									echo "* update ebuild: $category_name/$package_name/$ebuild_name\r";
+
 								}
 							}
 						}
@@ -256,7 +248,7 @@
 					foreach($arr_insert as $ebuild_name) {
 
 						echo "\033[K";
-						echo "import ebuild: $category_name/$package_name/$ebuild_name\r";
+						echo "* import ebuild: $category_name/$package_name/$ebuild_name\r";
 
 						$e = new PortageEbuild("$category_name/$ebuild_name");
 
@@ -344,17 +336,20 @@
 	unset($e, $p, $db_ebuild, $db_package, $arr, $arr_insert, $arr_update);
 
 	// Update the package_recent entries
+	echo "* Delete package_recent\n";
 	$sql = "DELETE FROM package_recent WHERE status = 1;";
 	$rs = pg_query($sql);
 	if($rs === false)
 		echo pg_last_error()."\n";
 
+	echo "* Update package_recent\n";
 	$sql = "INSERT INTO package_recent SELECT DISTINCT package, MAX(cache_mtime), 1 AS status FROM ebuild e GROUP BY package ORDER BY MAX(cache_mtime) DESC, package;";
 	$rs = pg_query($sql);
 	if($rs === false)
 		echo pg_last_error()."\n";
 
 	// Same for the arches
+	echo "* Insert package_recent_arch\n";
 	$sql = "INSERT INTO package_recent_arch SELECT DISTINCT package, MAX(cache_mtime), 1 AS status, ea.arch FROM ebuild e LEFT OUTER JOIN ebuild_arch ea ON ea.ebuild = e.id WHERE ea.arch IS NOT NULL AND ea.status != 2 GROUP BY package, ea.arch ORDER BY MAX(cache_mtime) DESC, package;";
 	$rs = pg_query($sql);
 	if($rs === false)
