@@ -8,34 +8,42 @@
 		$tree =& PortageTree::singleton();
 	}
 
-	$table = 'license';
+	// Get and display Portage's licenses
+	$a_tree_licenses = $tree->getLicenses();
+	$i_tree_licenses = count($a_tree_licenses);
+	echo "* Larry:	$i_tree_licenses\n";
 
-	$arr = $tree->getLicenses();
+	// Get and display Znurt's licenses
+	$sql = "SELECT name FROM license ORDER BY name;";
+	$a_znurt_licenses = pg_column_array(pg_fetch_all(pg_query($sql)));
+	$i_znurt_licenses = count($a_znurt_licenses);
+	echo "* Znurt:	$i_znurt_licenses\n";
 
-	$arr_diff = importDiff($table, $arr);
+	// Get the difference between the two sets and display changes
+	$a_import_diff = importDiff('license', $a_tree_licenses);
+	$i_insert_count = count($a_import_diff['insert']);
+	echo "* Insert:	$i_insert_count\n";
+	$i_delete_count = count($a_import_diff['delete']);
+	echo "* Delete:	$i_delete_count\n";
 
 	// Reset sequence if table is empty
-	$sql = "SELECT COUNT(1) FROM license;";
-	$count = $db->getOne($sql);
-	if($count == 0) {
+	if(!$i_znurt_licenses) {
 		$sql = "ALTER SEQUENCE license_id_seq RESTART WITH 1;";
-		$db->query($sql);
+		pg_query($sql);
 	}
 
-	if(count($arr_diff['delete'])) {
-		foreach($arr_diff['delete'] as $name) {
-			$sql = "DELETE FROM $table WHERE name = ".$db->quote($name).";";
-			$db->query($sql);
-		}
+	// Delete removed licenses
+	foreach($a_import_diff['delete'] as $str) {
+		$q_str = pg_escape_literal($str);
+		$sql = "DELETE FROM license WHERE name = $q_str;";
+		pg_query($sql);
 	}
 
-	if(count($arr_diff['insert'])) {
-		foreach($arr_diff['insert'] as $name) {
-			$arr_insert = array('name' => $name);
-			$db->autoExecute($table, $arr_insert, MDB2_AUTOQUERY_INSERT);
-		}
+	// Insert new licenses
+	foreach($a_import_diff['insert'] as $str) {
+		$q_str = pg_escape_literal($str);
+		$sql = "INSERT INTO license (name) VALUES ($q_str);";
+		pg_query($sql);
 	}
-
-	unset($arr, $arr_diff);
 
 ?>
