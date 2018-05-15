@@ -23,11 +23,13 @@
 	// Get the difference between the two sets and display changes
 	$a_import_diff = importDiff('arch', $a_tree_arches);
 	$i_insert_count = count($a_import_diff['insert']);
+	echo "* Insert:	$i_insert_count\n";
 	if($i_insert_count) {
 		$d_insert_arch = implode(' ', $a_import_diff['insert']);
-		echo "* Insert: $d_insert_arch\n";
+		echo "* Insert:	$d_insert_arch\n";
 	}
 	$i_delete_count = count($a_import_diff['delete']);
+	echo "* Delete:	$i_delete_count\n";
 	if($i_delete_count) {
 		$d_delete_arch = implode(' ', $a_import_diff['delete']);
 		echo "* Delete: $d_delete_arch\n";
