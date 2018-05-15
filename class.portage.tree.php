@@ -142,28 +142,6 @@
 			return array_keys($this->arrUseFlags($this->getTree()."/profiles/use.desc"));
 		}
 
-		/**
-		 * Create an array of the current list of herds
-		 *
-		 * @return array
-		 */
-		public function getHerds() {
-
-			$arr = array();
-
-			$filename = $this->getTree().'/metadata/herds.xml';
-
-			if(file_exists($filename)) {
-				$obj_xml = simplexml_load_file($filename);
-
-				foreach($obj_xml->herd as $obj) {
-					$herd = (string)$obj->name;
-					$arr[] = $herd;
-				}
-				sort($arr);
-			}
-			return $arr;
-		}
-
 	}
+
 ?>

@@ -11,7 +11,6 @@
 		private $portage_mtime;
 
 		private $arr_ebuilds;
-		private $arr_herds;
 		private $arr_maintainers;
 
 		private $manifest;
@@ -120,26 +119,6 @@
 			}
 
 			return $this->arr_ebuilds;
-		}
-
-		public function getHerds() {
-
-			$arr = array();
-
-			if(!$this->metadata_filename)
-				return $arr;
-
-			$obj =& $this->getMetadataXML();
-
-			if($obj->herd) {
-				foreach($obj->herd as $name) {
-					$arr[] = (string)$name;
-				}
-				sort($arr);
-			}
-
-			return $arr;
-
 		}
 
 		public function getMaintainers() {
