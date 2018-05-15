@@ -31,25 +31,14 @@
 
 	require_once 'header.php';
 
-	$tree =& PortageTree::singleton();
+	if(!$tree)
+		$tree =& PortageTree::singleton();
 
 	require_once 'class.portage.category.php';
 	require_once 'class.portage.package.php';
 	require_once 'class.portage.package.manifest.php';
 	require_once 'class.db.package.php';
 	require_once 'class.db.package.manifest.php';
-
-	$rs = pg_prepare("insert_package", 'INSERT INTO package (category, name, portage_mtime) VALUES ($1, $2, $3);');
-	if($rs === false)
-		echo pg_last_error()."\n";
-
-	$rs = pg_prepare("insert_manifest", 'INSERT INTO package_manifest (package, manifest, mtime, hash, filesize) SELECT p.id, $1, $2, $3, $4 FROM package p INNER JOIN category c ON c.id = $5 AND p.name = $6;');
-	if($rs === false)
-		echo pg_last_error()."\n";
-
-	$rs = pg_prepare("insert_file", 'INSERT INTO package_files (package, filename, type, hash, filesize) SELECT p.id, $1, \'DIST\', $2, $3 FROM package p INNER JOIN category c ON c.id = $4 AND p.name = $5');
-	if($rs === false)
-		echo pg_last_error()."\n";
 
 	// Verify that categories are imported
 	$sql = "SELECT COUNT(1) FROM category;";
@@ -59,226 +48,222 @@
 		exit;
 	}
 
-	$arr_update = array();
+	$portage_tree = $tree->getTree();
+
+	if(!isset($a_larry_categories))
+		$a_larry_categories = $tree->getCategories();
+
+	$retval = -1;
+	$a_output = array();
+	$a_package_manifests = array();
+	$a_package_manifest_files = array();
+	$a_package_manifest_hashes = array();
+	$find_out_filename = "/tmp/znurt.find.out";
+	$str = "find $portage_tree -mindepth 3 -maxdepth 3 -type f -name Manifest > $find_out_filename";
+	echo "* Exec:		$str\n";
+	passthru($str, $retval);
+	$file_contents = file($find_out_filename, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+
+	$a_larry_cps = array();
+
+	foreach($file_contents as $filename) {
+
+		$arr = explode('/', $filename);
+
+		// Drop the 'Manifest' from the string
+		array_pop($arr);
+
+		$package_name = array_pop($arr);
+		$category_name = array_pop($arr);
+
+
+		// Skip Larry directories like 'metadata/glsa'
+		if(!in_array($category_name, $a_larry_categories))
+			continue;
+
+		$cp = "$category_name/$package_name";
+		$a_larry_cps[] = $cp;
+
+		$manifest_hash = md5($filename);
+		$a_package_manifest_hashes[$category_name][$package_name] = $manifest_hash;
+		$a_larry_manifests[$cp] = $manifest_hash;
+
+	}
+
+	// Display package count
+	$i_larry_packages = count($a_larry_cps);
+	echo "* Larry:	$i_larry_packages\n";
+	$sql = "SELECT COUNT(1) FROM package;";
+	$i_znurt_packages = current(pg_fetch_row(pg_query($sql)));
+	echo "* Znurt:	$i_znurt_packages\n";
+
+	// Get the existing category => package names from the database
+	$sql = "SELECT category_name, package_name FROM view_package;";
+	$rs = pg_query($sql);
+	$a_znurt_cps = array();
+	while($row = pg_fetch_assoc($rs)) {
+		$a_znurt_cps[] = $row['category_name']."/".$row['package_name'];
+	}
+
+	// Find packages to insert and delete
+	$a_insert_cps = array_diff($a_larry_cps, $a_znurt_cps);
+	$a_delete_cps = array_diff($a_znurt_cps, $a_larry_cps);
+
+	$i_insert_count = count($a_insert_cps);
+	$i_delete_count = count($a_delete_cps);
+
+	// Delete removed packages
+	echo "* Delete: 	$i_delete_count\n";
+	foreach($a_delete_cps as $cp) {
+
+		$q_cp = pg_escape_literal($cp);
+		$sql = "DELETE FROM package WHERE id IN (SELECT package FROM view_package WHERE cp = $q_cp);";
+
+		$rs = pg_query($sql);
+
+		if($rs === false) {
+			echo "$sql\n";
+			echo pg_last_error();
+			echo "\n";
+		}
+
+	}
+
+	// Insert new packages with manifest hashes, distfiles
+	echo "* Insert: 	$i_insert_count\n";
+	$counter = 1;
+	foreach($a_insert_cps as $cp) {
+
+		$arr = explode('/', $cp);
+		$category_name = $arr[0];
+		$package_name = $arr[1];
+
+		$q_cp = pg_escape_literal($cp);
+		$q_category_name = pg_escape_literal($category_name);
+		$q_package_name = pg_escape_literal($package_name);
+
+		$manifest_hash = $a_package_manifest_hashes[$category_name][$package_name];
+		$q_manifest_hash = pg_escape_literal($manifest_hash);
+
+		echo "\033[K";
+		echo "* Progress:	$counter/$i_insert_count\r";
+		$counter++;
+
+		$sql = "INSERT INTO package (category, name, manifest_hash) SELECT c.id, $q_package_name, $q_manifest_hash FROM category c WHERE c.name = $q_category_name;";
+
+		$rs = pg_query($sql);
+
+		if($rs === false) {
+			echo "$sql\n";
+			echo pg_last_error();
+			echo "\n";
+		}
+
+		// Insert distfiles for new packages
+		$pm = new PackageManifest($category_name, $package_name);
+		$a_distfiles = $pm->getDistfiles();
+		$filesize = $pm->filesize;
+
+		foreach($a_distfiles as $filename) {
+
+			$q_cp = pg_escape_literal($cp);
+			$q_filename = pg_escape_literal($filename);
+
+			$sql = "INSERT INTO package_files (package, filename, filesize) SELECT package, $q_filename, $filesize FROM view_package WHERE cp = $q_cp;";
+
+			$rs = pg_query($sql);
+
+			if($rs === false) {
+				echo "$sql\n";
+				echo pg_last_error();
+				echo "\n";
+			}
+
+		}
+
+	}
+
+	if($i_insert_count)
+		echo "\n";
+
+	// Find packages where the Manifest hashes have changed
+	// Note that I could use an array_diff here, but I don't want to run it on thousands of values
+	$a_update_cps = array();
+	$sql = "SELECT cp, manifest_hash FROM view_package_manifest;";
+	$rs = pg_query($sql);
+	while($row = pg_fetch_assoc($rs)) {
+		$cp = $row['cp'];
+		if($row['manifest_hash'] != $a_larry_manifests[$cp]) {
+			$a_update_cps[] = $cp;
+		}
+	}
+
+	$i_update_count = count($a_update_cps);
+	echo "* Update:	$i_update_count\n";
+
+	// Update package manifests, distfiles
+	$counter = 1;
+	foreach($a_update_cps as $cp) {
+
+		$q_cp = pg_escape_literal($cp);
+		$manifest_hash = $a_larry_manifests[$cp];
+		$q_manifest_hash = pg_escape_literal($manifest_hash);
+		$sql = "UPDATE package SET manifest_hash = $q_manifest_hash WHERE id IN (SELECT package FROM view_package WHERE cp = $q_cp);";
+
+		echo "\033[K";
+		echo "* Progress:	$counter/$i_update_count\r";
+		$counter++;
+
+		$rs = pg_query($sql);
+
+		if($rs === false) {
+			echo pg_last_error();
+			echo "\n";
+		}
+
+		// It's easier and safer (and lazier) to simply reset distfiles
+
+		$sql = "DELETE FROM package_files WHERE id IN (SELECT package FROM view_package WHERE cp = $q_cp);";
+
+		$rs = pg_query($sql);
+
+		if($rs === false) {
+			echo pg_last_error();
+			echo "\n";
+		}
+
+		$pm = new PackageManifest($category_name, $package_name);
+		$a_distfiles = $pm->getDistfiles();
+		$filesize = $pm->filesize;
+
+		foreach($a_distfiles as $filename) {
+
+			$q_cp = pg_escape_literal($cp);
+			$q_filename = pg_escape_literal($filename);
+
+			$sql = "INSERT INTO package_files (package, filename, filesize) SELECT package, $q_filename, $filesize FROM view_package WHERE cp = $q_cp;";
+
+		}
+
+		$rs = pg_query($sql);
+
+		if($rs === false) {
+			echo pg_last_error();
+			echo "\n";
+		}
+
+	}
+
+	if($i_update_count)
+		echo "\n";
 
 	// Find the packages updated since last time
 	$sql = "SELECT COUNT(1) FROM package;";
 	$count = $db->getOne($sql);
-	if(!$count || $debug)
-		$all = true;
-	else {
-
-		$sql = "SELECT MAX(portage_mtime) FROM package;";
-		$max_portage_mtime = $db->getOne($sql);
-
-		if(is_null($max_portage_mtime))
-			$all = true;
-
-	}
 
 	if($count === "0") {
 		$sql = "ALTER SEQUENCE package_id_seq RESTART WITH 1;";
 		$db->query($sql);
 	}
-
-	if(!$all) {
-
-		$categories = $tree->getCategories();
-
-		$tmp = tempnam('/tmp', 'znurt');
-		touch($tmp, $max_portage_mtime);
-
-		$arr = array();
-
-		$dir = $tree->getTree();
-
-		foreach($categories as $category_name) {
-
-			$category_dir = $dir."/".$category_name;
-
-			$exec = "find $category_dir -mindepth 1 -maxdepth 1 -type d -newer $tmp";
-			$arr = array_merge($arr, shell::cmd($exec));
-		}
-		unlink($tmp);
-
-		$count = 0;
-
-		foreach($arr as $name) {
-
-			$name = str_replace($dir."/", "", $name);
-			$tmp = explode("/", $name);
-			$arr_update[$tmp[0]][] = $tmp[1];
-
-			$count++;
-
-		}
-
-	}
-
-	$sql = "SELECT id, name FROM category ORDER BY name;";
-	$arr_categories = $db->getAssoc($sql);
-
-	$sql = "SELECT category, package, category_name, package_name FROM view_package;";
-	$arr = $db->getAll($sql);
-	foreach($arr as $row) {
-		$arr_package_ids[$row['category_name']][$row['package_name']] = $row['package'];
-	}
-
-	$num_categories = count($arr_categories);
-	$counter_categories = 1;
-
-	foreach($arr_categories as $category_id => $category_name) {
-
-		$c = new PortageCategory($category_name);
-		$arr_packages = $c->getPackages();
-
-		$num_packages = count($arr_packages);
-		$counter_categories = str_pad($counter_categories, strlen($num_categories), 0, STR_PAD_LEFT);
-
-		$percent_complete = round((++$counter_categories / $num_categories) * 100);
-		$d_remaining_count = str_pad($counter_categories, strlen($num_categories), 0, STR_PAD_LEFT);
-		$d_percent_complete = str_pad($percent_complete, 2, 0, STR_PAD_LEFT)."% ($d_remaining_count/$num_categories)";
-
-		// echo "import category: $category_name\r";
-		$arr_diff = importDiff('package', $arr_packages, "category = $category_id");
-
-		// FIXME Flag to be deleted, execute later
-		// This is dangerous to delete right now because 1) it will take a *long* time, and
-		// 2) you're breaking the whole "snapshot" approach.
-		if(count($arr_diff['delete'])) {
-
-			echo "* Deleting num packages: ".count($arr_diff['delete'])."\n";
-
-			foreach($arr_diff['delete'] as $package_name) {
-				echo "* Deleting package: $package_name\n";
-				$sql = "DELETE FROM package WHERE name = ".$db->quote($package_name)." AND category = $category_id;";
-				$db->query($sql);
-			}
-		}
-
-		if(count($arr_diff['insert'])) {
-
-			/** Package Names **/
-
-			$arr_insert_sql = array();
-			$arr_insert_package = array();
-
-			foreach($arr_diff['insert'] as $package_name) {
-
-				echo "\033[K";
-				echo "import packages: $d_percent_complete category: $category_name package: $package_name - add package\r";
-
-				$p = new PortagePackage($category_name, $package_name);
-				$mtime = $p->portage_mtime;
-
-				$rs = pg_execute("insert_package", array($category_id, $package_name, $mtime));
-				if($rs === false)
-					echo pg_last_error()."\n";
-
-			}
-
-			/** Package Manifests */
-
-			foreach($arr_diff['insert'] as $package_name) {
-
-				echo "\033[K";
-				echo "import packages: $d_percent_complete category: $category_name package: $package_name - manifests\r";
-
-				$ma = new PackageManifest($category_name, $package_name);
-				$manifest = trim($ma->manifest);
-				$mtime = $ma->mtime;
-				$hash = trim($ma->hash);
-				$filesize = $ma->filesize;
-
-				$rs = pg_execute("insert_manifest", array($manifest, $mtime, $hash, $filesize, $category_id, $package_name));
-				if($rs === false)
-					echo pg_last_error()."\n";
-
-				// Import package files
-				$arr = $ma->getDistfiles();
-
-				foreach($arr as $filename) {
-
-					$hash = $ma->getHash($filename);
-					$hash = trim($hash);
-					$filesize = $ma->getFilesize($filename);
-
-					$rs = pg_execute("insert_file", array($filename, $hash, $filesize, $category_id, $package_name));
-					if($rs === false)
-						echo pg_last_error()."\n";
-
-				}
-
-				// Import patches
-				$arr = $ma->getFiles();
-
-				echo "\033[K";
-				echo "import packages: $d_percent_complete category: $category_name package: $package_name - patches\r";
-
-				foreach($arr as $filename) {
-
-					$hash = trim($ma->getHash($filename));
-					$filesize = $ma->getFilesize($filename);
-
-					$rs = pg_execute("insert_file", array($filename, $hash, $filesize, $category_id, $package_name));
-					if($rs === false)
-						echo pg_last_error()."\n";
-
-				}
-
-			}
-
-		}
-
-	}
-
-	echo "\n";
-
-	unset($c, $p, $ch, $ma, $arr_insert, $arr_diff, $arr_packages, $arr_categories, $categories, $package_id, $arr, $filename);
-
-	$count = 0;
-
-	foreach($arr_update as $category_name => $arr_packages) {
-
-		foreach($arr_packages as $package_name) {
-
-			$package_id = $arr_package_ids[$category_name][$package_name];
-
-			if($package_id) {
-
-				$p = new PortagePackage($category_name, $package_name);
-				$db_package = new DBPackage($package_id);
-
-				$manifest = new PackageManifest($category_name, $package_name, $tree->getTree());
-				$db_manifest = new DBPackageManifest($package_id);
-
-				if($manifest->hash != $db_manifest->hash || $debug) {
-
-					if($debug) {
-						shell::msg("Updating $category_name/$package_name id: $package_id");
-					}
-
-					// If the hash of this Manifest file changed, then a file
-					// somewhere has been added, deleted or modified.  Flag the status
-					// to make sure we examine that directory later.
-					$db_package->status = 1;
-
-					// Update the manifest in the DB
-					$db_manifest->hash = $manifest->hash;
-					$db_manifest->manifest = $manifest->manifest;
-					$db_manifest->mtime= $manifest->mtime;
-					$db_manifest->filesize = $manifest->filesize;
-
-					// FIXME hopefully can phase out mtime soon.
-					if($p->portage_mtime != $db_package->portage_mtime) {
-						$db_package->portage_mtime = $p->portage_mtime;
-					}
-
-				}
-			}
-		}
-	}
-
-	unset($arr_update, $category_name, $arr_packages, $package_id, $arr_package_ids, $db_package);
 
 ?>
