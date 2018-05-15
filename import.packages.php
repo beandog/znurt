@@ -236,13 +236,13 @@
 
 			$sql = "INSERT INTO package_files (package, filename, filesize) SELECT package, $q_filename, $filesize FROM view_package WHERE cp = $q_cp;";
 
-		}
+			$rs = pg_query($sql);
 
-		$rs = pg_query($sql);
+			if($rs === false) {
+				echo pg_last_error();
+				echo "\n";
+			}
 
-		if($rs === false) {
-			echo pg_last_error();
-			echo "\n";
 		}
 
 	}
