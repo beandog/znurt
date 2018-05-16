@@ -10,15 +10,14 @@
 
 	// Get and display Portage's arches
 	$a_tree_arches = $tree->getArches(true);
-	$d_tree_arches = implode(' ', $a_tree_arches);
-	echo "* Larry:	$d_tree_arches\n";
+	$i_tree_arches = count($a_tree_arches);
+	echo "* Larry:	$i_tree_arches\n";
 
 	// Display Znurt's arches
 	$sql = "SELECT name FROM arch ORDER BY name;";
 	$a_znurt_arches = pg_column_array(pg_fetch_all(pg_query($sql)));
-	$d_znurt_arches = implode(" ", $a_znurt_arches);
 	$i_znurt_arches = count($a_znurt_arches);
-	echo "* Znurt:	$d_znurt_arches\n";
+	echo "* Znurt:	$i_znurt_arches\n";
 
 	// Get the difference between the two sets and display changes
 	$a_import_diff = importDiff('arch', $a_tree_arches);
