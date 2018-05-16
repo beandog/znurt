@@ -7,7 +7,6 @@
 	// See header.dsn.php for specific connection settings for your system
 	require_once 'header.mdb2.php';
 
-	require_once 'class.common.php';
 	require_once 'class.shell.php';
 
 	// Options for detailed output
@@ -19,7 +18,6 @@
 
 	if($include_path) {
 		ini_set('include_path', ini_get('include_path').$include_path);
-		require_once 'class.common.php';
 		require_once 'class.shell.php';
 	}
 
