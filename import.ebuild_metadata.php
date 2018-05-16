@@ -3,6 +3,22 @@
 	echo "[Ebuild Metadata]\n";
 
 	/**
+	 * The ebuild metadata is where the database really begins to shine, as
+	 * it gathers really specific details about an ebuild. However, since
+	 * there's little usage or need for it while searching the available
+	 * packages, and because this information is more relative to running
+	 * some QA, I'm skipping all of it except for the descriptions.
+	 *
+	 * Even then, the descriptions are not language specific, and I'd
+	 * rather access it on the frontend from the metadata.xml file
+	 * instead.
+	 *
+	 * There's lots of *potential* uses for all of it, but importing it
+	 * all increases the amount of time for this to run. It's set up right
+	 * now to skip over everything not needed / wanted at the time.
+	 */
+
+	/**
 	 * It may seem a little odd, and to break normalization, to have a query to set the description on the package
 	 * table when it can be queried from the ebuilds.  The fact is this is just one of many shortcuts taken, since
 	 * the site is a snapshot, and information like that is not required in realtime.  Not to mention it makes
@@ -56,6 +72,11 @@
 
 			foreach($arr_metadata as $keyword => $value) {
 
+				// Znurt website only displays description right now, skip the
+				// rest while the others are not needed.
+				if($keyword != 'description')
+					continue;
+
 				if(!empty($value)) {
 					$arr_insert = array(
 						'ebuild' => $ebuild,
@@ -68,29 +89,23 @@
 						echo pg_last_error();
 						echo "\n";
 					}
+
+					// Update ebuild metadata in database
+					$sql = "UPDATE package SET description = package_description(id) WHERE id = $ebuild;";
+
+					$rs = pg_query($sql);
+
+					if($rs === false) {
+						echo "$sql\n";
+						echo pg_last_error();
+						echo "\n";
+					}
 				}
 			}
 		}
 
 		$count++;
 
-	}
-
-	// Set the new package descriptions
-	$sql = "SELECT COUNT(1) FROM package WHERE status = 1 OR description = '';";
-	$count = $db->getOne($sql);
-	$total = 1;
-	echo "* Update package descriptions\n";
-	echo "* Processing query in background, package.description will be empty until finished\n";
-	// This will take a very long time, so throw it to run off asynchronously
-
-	$sql = "UPDATE package SET description = package_description(id) WHERE id IN (SELECT id FROM package WHERE description = '');";
-	$bool = pg_send_query($pg, $sql);
-	if($bool === false) {
-		echo "* Running $sql failed\n";
-		$rs = pg_get_result();
-		var_dump($rs);
-		echo "\n";
 	}
 
 ?>
