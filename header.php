@@ -39,7 +39,7 @@
  	// This gets used everywhere, might as well create it here
 	// and check for it later.
 	require_once 'class.portage.tree.php';
-	$tree =& PortageTree::singleton();
+	$tree = PortageTree::singleton();
 
 	// A helper script to return an array of one column's values
 	function pg_column_array($result_array) {

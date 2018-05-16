@@ -5,7 +5,7 @@
 	require_once 'header.php';
 
 	if(!$tree) {
-		$tree =& PortageTree::singleton();
+		$tree = PortageTree::singleton();
 	}
 
 	// Get and display Portage's licenses

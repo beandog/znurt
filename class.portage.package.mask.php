@@ -7,7 +7,7 @@
 
 		function __construct($profile = 'portage') {
 
-			$tree =& PortageTree::singleton();
+			$tree = PortageTree::singleton();
 
 			switch($profile) {
 

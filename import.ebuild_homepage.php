@@ -11,7 +11,7 @@
 	require_once 'header.php';
 
 	if(!$tree) {
-		$tree =& PortageTree::singleton();
+		$tree = PortageTree::singleton();
 	}
 
 	require_once 'class.portage.category.php';

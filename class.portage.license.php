@@ -16,7 +16,7 @@
 
 			$str = basename($str);
 
-			$tree =& PortageTree::singleton();
+			$tree = PortageTree::singleton();
 
 			if(file_exists($tree->getTree()."/licenses/$str")) {
 

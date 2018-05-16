@@ -12,7 +12,7 @@
 	require_once 'File/Find.php';
 
 	if(!$tree) {
-		$tree =& PortageTree::singleton();
+		$tree = PortageTree::singleton();
 	}
 
 	// Global use flags

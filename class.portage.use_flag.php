@@ -11,7 +11,7 @@
 
 		function __construct($type = 'global', $name = "") {
 
-			$tree =& PortageTree::singleton();
+			$tree = PortageTree::singleton();
 
 			$dir = $tree->getTree()."/profiles/";
 

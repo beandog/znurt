@@ -125,7 +125,7 @@
 			if(!$this->metadata_filename)
 				return $arr;
 
-			$obj =& $this->getMetadataXML();
+			$obj = $this->getMetadataXML();
 
 			if($obj->maintainer) {
 				$x = 0;
