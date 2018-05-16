@@ -399,7 +399,16 @@
 		 */
 		function getComponents() {
 
-			$arr_components = array();
+			$arr_components = array(
+				'pv' => '',
+				'version' => '',
+				'alpha' => null,
+				'beta' => null,
+				'pre' => null,
+				'rc' => null,
+				'p' => null,
+				'r' => null,
+			);
 
 			if(count($this->arr_components)) {
 				return $this->arr_components;
