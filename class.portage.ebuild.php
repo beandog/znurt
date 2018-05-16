@@ -408,7 +408,7 @@
 			if(!$this->has_version)
 				return array('version' => '', 'pv' => '');
 
-			$str = $this->stripPackage($str);
+			$str = $this->stripPackage($this->atom);
 
 			$arr = explode("-", $str);
 
