@@ -9,284 +9,199 @@
 	 * This is actually much simpler than trying to update everything *and* it allows the
 	 * website to constantly keep a snapshot of its current status regardless of backend
 	 * activity.
-	 *
-	 * To distinguish between new and updated ebuilds in the database, post-run, the updated
-	 * ebuilds will have a non-null value for the "udate" (update date) column. New
-	 * ebuilds will have a null value.
-	 */
-
-	/**
-	 * Right now this will run fine is run as a cron job. It will clean up after itself
-	 * if there are NO ebuilds in the tree, but if you accidentally remove an entire package
-	 * or something, it will still only insert what's new (recently modified since last mtime).
-	 * For now, you're going to have to manually flip some bits to get it to correct mistakes
-	 * like that. It's too much of a pain to have it check for it (at this point).
-	 */
-
-	 /**
-	 * This script is similar to the package one, in that it will create a temporary file
-	 * and set the mtime to the last package, and then look for any new changes. Makes the
-	 * find utility do all the heavy lifting, and is much simpler.
-	 *
-	 * Also, this updates the DB with the mtime of both the actual ebuild and the cache file.
-	 * It seems like they are usually the same mtime, though.
-	 *
-	 * While it may seem odd, any time an ebuild is "changed" (as in, the mtime is different), it is
-	 * actually re-inserted as a new ebuild all over again. It would be too much work to go
-	 * through all the scripts and compare differences between old and new data; it is far easier to
-	 * simply re-import the data as if it was newly created. New ebuilds are flagged with a status of 1
-	 * and should be ignored by the website. Unchanged ebuilds are flagged with a status of 0 and ones
-	 * marked for removal with a 2. The website should always pull the ones where the status is 0 or 2.
-	 *
 	 */
 
 	require_once 'header.php';
 
-	if(!$tree) {
+	if(!$tree)
 		$tree =& PortageTree::singleton();
-	}
 
 	require_once 'class.portage.category.php';
 	require_once 'class.portage.package.php';
 	require_once 'class.portage.ebuild.php';
 	require_once 'class.db.ebuild.php';
 
-	$rs = pg_prepare('insert_ebuild', 'INSERT INTO ebuild (package, pf, pv, pr, pvr, alpha, beta, pre, rc, p, version, slot, portage_mtime, cache_mtime, status, udate, source, filesize, hash) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19);');
-	if($rs === false)
-		echo pg_last_error()."\n";
-
-
-	/*
-	$sql = "DELETE FROM ebuild WHERE status > 0;";
-	$rs = pg_query($sql);
-	if($rs === false)
-		echo pg_last_error()."\n";
-	*/
-
-	// Check to see if there are any ebuilds
-	$sql = "SELECT COUNT(1) FROM ebuild WHERE status = 0;";
-	$count = $db->getOne($sql);
-
-	// If there aren't any, then import *all* packages
-	if(!$count || $debug)
-		$all = true;
-	else {
-
-		// If there are, get the last modified time
-		$sql = "SELECT MAX(portage_mtime) AS max_portage_mtime, MAX(cache_mtime) AS max_cache_mtime FROM ebuild WHERE status = 0;";
-		$row = $db->getRow($sql);
-
-		if(is_array($row)) {
-			extract($row);
-
-			if(is_null($max_portage_mtime) || is_null($max_cache_mtime))
-				$all = true;
-			else
-				$min = min($max_portage_mtime, $max_cache_mtime);
-		}
+	// Verify that packages are imported
+	$sql = "SELECT COUNT(1) FROM package;";
+	$count = current(pg_fetch_row(pg_query($sql)));
+	if(!$count) {
+		echo "* No packages in the database\n";
+		goto end_ebuilds;
 	}
+
+	// Get the portage ebuilds
+	$portage_tree = $tree->getTree();
+	$retval = -1;
+	$find_out_filename = "/tmp/znurt.find.ebuilds.out";
+	$str = "find $portage_tree -mindepth 3 -maxdepth 3 -type f -name '*.ebuild' > $find_out_filename";
+	echo "* Exec:		$str\n";
+	passthru($str, $retval);
+	$file_contents = file($find_out_filename, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+	sort($file_contents);
+
+	$a_larry_hashes = array();
+	$a_larry_ebuilds = array();
+
+	foreach($file_contents as $filename) {
+
+		$arr = explode('/', $filename);
+
+		$ebuild = array_pop($arr);
+		$package_name = array_pop($arr);
+		$category_name = array_pop($arr);
+
+		$cp = "$category_name/$package_name";
+		$cpf = "$cp/$ebuild";
+
+		$sha1_sum = sha1_file($filename);
+
+		if($sha1_filename === false) {
+			echo "* Could not get SHA1 hash for file: $filename\n";
+			continue;
+		}
+
+		$a_larry_hashes[$cpf] = $sha1_sum;
+
+	}
+
+	$i_larry_ebuilds = count($a_larry_hashes);
+
+	echo "* Larry:	$i_larry_ebuilds\n";
+
+	// Display ebuild count in database
+	$sql = "SELECT COUNT(1) FROM ebuild;";
+	$i_znurt_ebuilds = current(pg_fetch_row(pg_query($sql)));
+	echo "* Znurt:	$i_znurt_ebuilds\n";
 
 	// If no ebuilds, reset the sequence
-	if($count === "0") {
+	if(!$i_znurt_ebuilds) {
 		$sql = "ALTER SEQUENCE ebuild_id_seq RESTART WITH 1;";
+		pg_query($sql);
+	}
+
+	$sql = "SELECT cpf, hash FROM view_ebuild_filename;";
+	$rs = pg_query($sql);
+
+	// Get list of znurt ebuilds
+	$a_znurt_ebuilds = array();
+	while($row = pg_fetch_assoc($rs)) {
+		$a_znurt_ebuilds[$row['cpf']] = $row['hash'];
+	}
+
+	// Compare ebuild arrays for insert and update
+	$a_insert_ebuilds = array();
+	$a_update_ebuilds = array();
+	foreach($a_larry_hashes as $cpf => $hash) {
+
+		if(!array_key_exists($cpf, $a_znurt_ebuilds)) {
+			$a_insert_ebuilds[] = $cpf;
+		} elseif($a_znurt_ebuilds[$cpf] != $hash) {
+			$a_update_ebuilds[] = $cpf;
+		}
+
+	}
+
+	$i_insert_count = count($a_insert_ebuilds);
+	$i_update_count = count($a_update_ebuilds);
+
+	echo "* Insert:	$i_insert_count\n";
+	echo "* Update:	$i_update_count\n";
+
+	// It is far simpler and cleaner to delete an updated ebuild that has been updated and re-import it
+	foreach($a_update_ebuilds as $cpf) {
+
+		$cpe = preg_replace('/\.ebuild$/', '', $cpf);
+
+		$q_cpe = pg_escape_literal($cpe);
+
+		$sql = "DELETE FROM ebuild WHERE id IN (SELECT id FROM view_ebuild_cpe WHERE cpe = $q_cpe);";
+
+		if($rs === false) {
+			echo "$sql\n";
+			echo pg_last_error();
+			echo "\n";
+		}
+
+		$arr_insert_ebuilds[] = $cpf;
+
+	}
+
+	// Resort array if new ones got added
+	if($i_update_count)
+		sort($arr_insert_ebuilds);
+
+	// Insert new ebuilds
+	$counter = 1;
+	foreach($a_insert_ebuilds as $cpf) {
+
+		echo "\033[K";
+		echo "* Progress:	$counter/$i_insert_count\r";
+		$counter++;
+
+		$arr = explode('/', $cpf);
+		$filename = array_pop($arr);
+		$pf = preg_replace('/\.ebuild$/', '', $filename);
+		$package_name = array_pop($arr);
+		$category_name = array_pop($arr);
+		$cp = "$category_name/$package_name";
+		$atom = "$category_name/$pf";
+
+		$e = new PortageEbuild($atom);
+
+		$arr = array(
+			'pf' => $pf, // ebuild class has some bugs which doesn't make this completely reliable, use filename's instead
+			'pv' => $e->pv,
+			'pr' => $e->pr,
+			'pvr' => $e->pvr,
+			'alpha' => $e->_alpha,
+			'beta' => $e->_beta,
+			'pre' => $e->_pre,
+			'rc' => $e->_rc,
+			'p' => $e->_p,
+			'version' => $e->version,
+			'slot' => $e->slot,
+			'hash' => $a_larry_hashes[$cpf],
+		);
+
+		$q_pr = ($arr['pr'] == NULL ? 'NULL' : $arr['pr']);
+		$q_cp = pg_escape_literal($cp);
+
+		$sql = 'INSERT INTO ebuild (package, pf, pv, pr, pvr, alpha, beta, pre, rc, p, version, slot, hash) SELECT vp.package, '
+			. pg_escape_literal($arr['pf'])
+			. ', '
+			. pg_escape_literal($arr['pv'])
+			. ', '
+			. $q_pr
+			. ', '
+			. pg_escape_literal($arr['pvr'])
+			. ', '
+			. pg_escape_literal($arr['alpha'])
+			. ', '
+			. pg_escape_literal($arr['beta'])
+			. ', '
+			. pg_escape_literal($arr['pre'])
+			. ', '
+			. pg_escape_literal($arr['rc'])
+			. ', '
+			. pg_escape_literal($arr['p'])
+			. ', '
+			. pg_escape_literal($arr['version'])
+			. ', '
+			. pg_escape_literal($arr['slot'])
+			. ', '
+			. pg_escape_literal($arr['hash'])
+			. " FROM view_package vp WHERE vp.cp = $q_cp;";
+
 		$rs = pg_query($sql);
-		if($rs === false)
-			echo pg_last_error()."\n";
-	}
 
-	$categories = $tree->getCategories();
-	$arr_import = array();
-
-	// Find all the ebuilds that are currently in the db
-	$arr = $arr_db = array();
-	if(!$all) {
-		// Find all the packages that have been updated in the last 24 hours
-		// Need to check the packages themselves, because something may have
-		// been deleted.
-		$portage = $tree->getTree();
-		$cache = $tree->getTree()."/metadata/md5-cache/";
-
-		$tmp = tempnam('/tmp', 'znurt.md5-cache.timestamp.');
-		touch($tmp, $min);
-
-		$exec = "find $cache -mindepth 2 -type f -! -name Manifest.gz -newer $tmp";
-		$arr = shell::cmd($exec);
-
-		$num_updated_ebuilds = count($arr);
-		echo "* new/updated ebuilds found since last sync: $num_updated_ebuilds\n";
-
-		foreach($arr as $dir) {
-			$atom = str_replace($tree->getTree()."/metadata/md5-cache/", "", $dir);
-			$e = new PortageEbuild($atom);
-
-			$arr_import[$e->category][] = $e->pn;
-			$arr_import[$e->category] = array_unique($arr_import[$e->category]);
+		if($rs === false) {
+			echo "$sql\n";
+			echo pg_last_error();
+			echo "\n";
 		}
 
-		// Also add any packages that were flagged when importing those
-		$sql = "SELECT c.name AS category_name, p.name AS package_name FROM package p INNER JOIN category c ON c.id = p.category WHERE p.status = 1;";
-		$arr = $db->getAll($sql);
 
-		if(count($arr)) {
-			foreach($arr as $row) {
-				$arr_import[$row['category_name']][] = $row['package_name'];
-				$arr_import[$row['category_name']] = array_unique($arr_import[$row['category_name']]);
-			}
-		}
-
-		ksort($arr_import);
-
-	} elseif($all) {
-
-		foreach($categories as $name) {
-			$c = new PortageCategory($name);
-			$arr_import[$name] = $c->getPackages();
-		}
-
-	}
-
-	// Get the package IDs for reference
-	// and the mtimes of the ebuilds for verification
-	$sql = "SELECT p.id AS package_id, c.name AS category_name, p.name AS package_name, e.pf AS ebuild_name, e.id AS ebuild FROM ebuild e RIGHT OUTER JOIN package p ON e.package = p.id INNER JOIN category c ON p.category = c.id ORDER BY c.name, p.name;";
-	$arr = $db->getAll($sql);
-	if(count($arr)) {
-		foreach($arr as $row) {
-			extract($row);
-			$arr_db[$category_name][$package_name] = $package_id;
-			if($ebuild_name) {
-				$arr_ebuild_ids[$category_name][$package_name][$ebuild_name] = $ebuild;
-			}
-		}
-	}
-
-	$count_arr_import = count($arr_import);
-
-	if($count_arr_import) {
-
-		foreach($arr_import as $category_name => $arr_category) {
-
-			foreach($arr_category as $package_name) {
-
-				$arr_insert = array();
-				$arr_delete = array();
-				$arr_update = array();
-
-				if(count($arr_ebuild_ids[$category_name][$package_name]))
-					$arr_db_ebuilds = array_keys($arr_ebuild_ids[$category_name][$package_name]);
-				else
-					$arr_db_ebuilds = array();
-
-				$p = new PortagePackage($category_name, $package_name);
-
-				$package_id =& $arr_db[$category_name][$package_name];
-
-				// If there are any old ebuilds (in the DB), then compare the new (in portage)
-				if(count($arr_db_ebuilds)) {
-
-					$arr_fs_ebuilds = $p->getEbuilds();
-
-					// Check old against new
-					$arr_delete = array_diff($arr_db_ebuilds, $arr_fs_ebuilds);
-					$arr_insert = array_diff($arr_fs_ebuilds, $arr_db_ebuilds);
-
-					// Next, look at the hashes and see if any need to be updated
-					if(count($arr_fs_ebuilds)) {
-
-						foreach($arr_fs_ebuilds as $ebuild_name) {
-
-							$e = new PortageEbuild("$category_name/$ebuild_name");
-
-							$ebuild = $arr_ebuild_ids[$category_name][$package_name][$ebuild_name];
-
-							if($ebuild) {
-								$db_ebuild = new DBEbuild($ebuild);
-
-								if($db_ebuild->hash != $e->hash) {
-
-									$arr_update[] = $ebuild_name;
-									$arr_insert[] = $ebuild_name;
-
-									// Normally I'd add this here, but instead, just go ahead and mark it
-									// right away, and avoid having it run twice.
- 									$db_ebuild->status = 2;
-
-									echo "\033[K";
-									echo "* update ebuild: $category_name/$package_name/$ebuild_name\r";
-
-								}
-							}
-						}
-					}
-
-					// FIXME just pass the IDs
-					if(count($arr_delete)) {
-						foreach($arr_delete as $ebuild_name) {
-							shell::msg("[delete] $category_name/$ebuild_name");
-
-							$ebuild = $arr_ebuild_ids[$category_name][$package_name][$ebuild_name];
-
-							if($ebuild) {
-								$db_ebuild = new DBEbuild($ebuild);
-								$db_ebuild->status = 2;
-							}
-						}
-					}
-
-				}
-				// Otherwise, insert all of them
-				else {
-					$arr_insert = $p->getEbuilds();
-				}
-
-				if(count($arr_insert)) {
-
-					$arr_insert = array_unique($arr_insert);
-
-					foreach($arr_insert as $ebuild_name) {
-
-						echo "\033[K";
-						echo "* import ebuild: $category_name/$package_name/$ebuild_name\r";
-
-						$e = new PortageEbuild("$category_name/$ebuild_name");
-
-						if(in_array($ebuild_name, $arr_update)) {
-							$udate = $now;
-						} else
-							$udate = null;
-
-						$arr = array(
-							'package' => $package_id,
-							'pf' => $e->pf,
-							'pv' => $e->pv,
-							'pr' => $e->pr,
-							'pvr' => $e->pvr,
-							'alpha' => $e->_alpha,
-							'beta' => $e->_beta,
-							'pre' => $e->_pre,
-							'rc' => $e->_rc,
-							'p' => $e->_p,
-							'version' => $e->version,
-							'slot' => $e->slot,
-							'portage_mtime' => $e->portage_mtime,
-							'cache_mtime' => $e->cache_mtime,
-							'status' => 1,
-							'udate' => $udate,
-							'source' => $e->source,
-							'filesize' => $e->filesize,
-							'hash' => $e->hash,
-						);
-
-						$fixme = false;
-
-						if(is_null($package_id)) {
-
-							echo "FIXME - package_id is a NULL value\n";
-							print_r($arr);
-							echo "\n";
-							$fixme = true;
-
-						}
-
+						/*
 						// Caught something my regexp can't find -- that is, recompiling the filename from the parsed values didn't work because the file doesn't exist
 						if($source = '') {
 							echo "FIXME - couldn't find ebuild filename\n";
@@ -317,40 +232,13 @@
 							echo pg_last_error()."\n";
 							echo "\n";
 						}
-
-					}
-
-				}
-
-			}
-
-		}
-
-		echo "\n";
+						*/
 
 	}
 
-	unset($e, $p, $db_ebuild, $db_package, $arr, $arr_insert, $arr_update);
+	if($i_update_count)
+		echo "\n";
 
-	// Update the package_recent entries
-	echo "* Delete package_recent\n";
-	$sql = "DELETE FROM package_recent WHERE status = 1;";
-	$rs = pg_query($sql);
-	if($rs === false)
-		echo pg_last_error()."\n";
-
-	echo "* Update package_recent\n";
-	$sql = "INSERT INTO package_recent SELECT DISTINCT package, MAX(cache_mtime), 1 AS status FROM ebuild e GROUP BY package ORDER BY MAX(cache_mtime) DESC, package;";
-	$rs = pg_query($sql);
-	if($rs === false)
-		echo pg_last_error()."\n";
-
-	// Same for the arches
-	echo "* Insert package_recent_arch\n";
-	$sql = "INSERT INTO package_recent_arch SELECT DISTINCT package, MAX(cache_mtime), 1 AS status, ea.arch FROM ebuild e LEFT OUTER JOIN ebuild_arch ea ON ea.ebuild = e.id WHERE ea.arch IS NOT NULL AND ea.status != 2 GROUP BY package, ea.arch ORDER BY MAX(cache_mtime) DESC, package;";
-	$rs = pg_query($sql);
-	if($rs === false)
-		echo pg_last_error()."\n";
-
+	end_ebuilds:
 
 ?>
