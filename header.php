@@ -20,7 +20,7 @@
 
 	function importDiff($table, $arr_new, $where = "") {
 
- 		$db =& MDB2::singleton();
+ 		$db = MDB2::singleton();
 
  		if($where)
  			$where = "WHERE $where";

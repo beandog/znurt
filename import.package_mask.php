@@ -52,7 +52,7 @@
 
 		function null2str($var) {
 
-			$db =& MDB2::singleton();
+			$db = MDB2::singleton();
 
 			if(is_null($var))
 				return 'NULL';

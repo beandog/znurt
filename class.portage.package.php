@@ -202,7 +202,7 @@
 			if(!$this->metadata_filename)
 				return $arr;
 
-			$obj =& $this->getMetadataXML();
+			$obj = $this->getMetadataXML();
 
 			// Getting attributes is always a pain
 			// http://us.php.net/manual/en/function.simplexml-element-attributes.php
