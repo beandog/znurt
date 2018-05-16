@@ -207,26 +207,6 @@ CREATE SEQUENCE public.arch_id_seq
 ALTER SEQUENCE public.arch_id_seq OWNED BY public.arch.id;
 
 
-SET default_with_oids = false;
-
---
--- Name: bugzilla; Type: TABLE; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE TABLE public.bugzilla (
-    bug_id integer NOT NULL,
-    bug_severity character varying(255) DEFAULT ''::character varying NOT NULL,
-    priority character varying(12) DEFAULT ''::character varying NOT NULL,
-    op_sys character varying(255) DEFAULT ''::character varying NOT NULL,
-    assigned_to character varying(255) DEFAULT ''::character varying NOT NULL,
-    bug_status character varying(255) DEFAULT ''::character varying NOT NULL,
-    resolution character varying(255) DEFAULT ''::character varying,
-    short_short_desc character varying(255) DEFAULT ''::character varying NOT NULL
-);
-
-
-SET default_with_oids = true;
-
 --
 -- Name: category; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
@@ -1211,19 +1191,6 @@ CREATE VIEW public.view_package AS
 
 
 --
--- Name: view_package_bugs; Type: VIEW; Schema: public; Owner: -
---
-
-CREATE VIEW public.view_package_bugs AS
- SELECT b.bug_id AS bug,
-    p.id AS package,
-    b.short_short_desc
-   FROM ((public.package p
-     JOIN public.category c ON ((p.category = c.id)))
-     JOIN public.bugzilla b ON (((b.short_short_desc)::text ~~ (((('%'::text || (c.name)::text) || '/'::text) || (p.name)::text) || '%'::text))));
-
-
---
 -- Name: view_package_depend; Type: VIEW; Schema: public; Owner: -
 --
 
@@ -1665,20 +1632,6 @@ ALTER TABLE ONLY public.znurt
 --
 
 CREATE INDEX idx_bugzilla_bug ON public.package_bugs USING btree (bug);
-
-
---
--- Name: idx_bugzilla_description; Type: INDEX; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE INDEX idx_bugzilla_description ON public.bugzilla USING btree (short_short_desc);
-
-
---
--- Name: idx_bugzilla_description_txt; Type: INDEX; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE INDEX idx_bugzilla_description_txt ON public.bugzilla USING btree (short_short_desc text_pattern_ops);
 
 
 --

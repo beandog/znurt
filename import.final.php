@@ -16,18 +16,6 @@
  	$sql = "DELETE FROM ebuild WHERE status IN(2,3);";
  	$db->query($sql);
 
-	// Same for bugs
-	$sql = "SELECT COUNT(1) FROM package_bugs WHERE status = 1;";
-	$count = $db->getOne($sql);
-
-	if($count) {
-		$sql = "DELETE FROM package_bugs WHERE status = 0;";
-		$db->query($sql);
-
-		$sql = "UPDATE package_bugs SET status = 0 WHERE status = 1;";
-		$db->query($sql);
-	}
-
 	// Check for package_recent replacements
 	$sql = "SELECT COUNT(1) FROM package_recent WHERE status = 1;";
 	$count = $db->getOne($sql);
