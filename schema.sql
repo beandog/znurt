@@ -744,26 +744,6 @@ CREATE VIEW public.new_packages AS
 
 
 --
--- Name: package_bugs; Type: TABLE; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE TABLE public.package_bugs (
-    bug integer NOT NULL,
-    description character varying(255) DEFAULT ''::character varying NOT NULL,
-    status smallint DEFAULT 0 NOT NULL,
-    package integer NOT NULL,
-    idate timestamp without time zone DEFAULT now() NOT NULL
-);
-
-
---
--- Name: COLUMN package_bugs.status; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.package_bugs.status IS 'complete, new';
-
-
---
 -- Name: package_changelog; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
@@ -1628,13 +1608,6 @@ ALTER TABLE ONLY public.znurt
 
 
 --
--- Name: idx_bugzilla_bug; Type: INDEX; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE INDEX idx_bugzilla_bug ON public.package_bugs USING btree (bug);
-
-
---
 -- Name: idx_category_name_txt; Type: INDEX; Schema: public; Owner: -; Tablespace: 
 --
 
@@ -1817,14 +1790,6 @@ ALTER TABLE ONLY public.ebuild_use
 
 ALTER TABLE ONLY public.package_maintainer
     ADD CONSTRAINT fkey_package_maintainer_package FOREIGN KEY (package) REFERENCES public.package(id) ON DELETE CASCADE;
-
-
---
--- Name: package_bugs_package_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.package_bugs
-    ADD CONSTRAINT package_bugs_package_fkey FOREIGN KEY (package) REFERENCES public.package(id) ON DELETE CASCADE;
 
 
 --
