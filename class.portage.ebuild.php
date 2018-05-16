@@ -135,6 +135,7 @@
 					case '_rc':
 					case '_p':
 						return $this->getSuffix($var);
+						break;
 
 					// 'r' is the only one that could
 					// get a bit confusing, since there's so many
