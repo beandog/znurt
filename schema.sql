@@ -1080,6 +1080,41 @@ CREATE VIEW public.view_ebuild AS
 
 
 --
+-- Name: view_ebuild_cpe; Type: VIEW; Schema: public; Owner: -
+--
+
+CREATE VIEW public.view_ebuild_cpe AS
+ SELECT e.id,
+    c.name AS category_name,
+    c.id AS category,
+    p.name AS package_name,
+    (((c.name)::text || '/'::text) || (p.name)::text) AS cp,
+    ((((c.name)::text || '/'::text) || (p.name)::text) || ('/'::text || (e.pf)::text)) AS cpe,
+    e.package,
+    e.pf,
+    e.pv,
+    e.pr,
+    e.pvr,
+    e.alpha,
+    e.beta,
+    e.pre,
+    e.rc,
+    e.p,
+    e.slot,
+    e.version,
+    e.ev,
+    e.lvl,
+    e.cache_mtime,
+    e.portage_mtime,
+    e.idate,
+    (em.ebuild IS NOT NULL) AS masked
+   FROM (((public.ebuild e
+     JOIN public.package p ON ((e.package = p.id)))
+     JOIN public.category c ON ((c.id = p.category)))
+     LEFT JOIN public.ebuild_mask em ON ((e.id = em.ebuild)));
+
+
+--
 -- Name: view_ebuild_depend; Type: VIEW; Schema: public; Owner: -
 --
 
@@ -1092,6 +1127,27 @@ CREATE VIEW public.view_ebuild_depend AS
      JOIN public.ebuild e ON ((ed.ebuild = e.id)))
      JOIN public.package p ON ((p.id = ed.package)))
      JOIN public.category c ON ((p.category = c.id)));
+
+
+--
+-- Name: view_ebuild_filename; Type: VIEW; Schema: public; Owner: -
+--
+
+CREATE VIEW public.view_ebuild_filename AS
+ SELECT e.id,
+    c.id AS category,
+    e.package,
+    c.name AS category_name,
+    p.name AS package_name,
+    (((c.name)::text || '/'::text) || (p.name)::text) AS cp,
+    e.pf,
+    ((((((c.name)::text || '/'::text) || (p.name)::text) || '/'::text) || (e.pf)::text) || '.ebuild'::text) AS cpf,
+    e.hash
+   FROM (((public.ebuild e
+     JOIN public.package p ON ((e.package = p.id)))
+     JOIN public.category c ON ((c.id = p.category)))
+     LEFT JOIN public.ebuild_mask em ON ((e.id = em.ebuild)))
+  ORDER BY (((c.name)::text || '/'::text) || (p.name)::text), ((e.pf)::text || '.ebuild'::text);
 
 
 --
@@ -1554,6 +1610,14 @@ ALTER TABLE ONLY public.ebuild_homepage
 
 ALTER TABLE ONLY public.ebuild_license
     ADD CONSTRAINT uniq_ebuild_license UNIQUE (ebuild, license);
+
+
+--
+-- Name: uniq_ebuild_pf; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY public.ebuild
+    ADD CONSTRAINT uniq_ebuild_pf UNIQUE (package, pf);
 
 
 --
