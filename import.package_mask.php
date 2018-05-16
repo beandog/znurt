@@ -36,7 +36,7 @@
 	$sql = "SELECT COUNT(1) FROM package_mask WHERE status = 0;";
 	$count = $db->getOne($sql);
 
-	if(is_null($dbmtime->mtime) || ($pmask->mtime > $dbmtime->mtime) || $debug || !$count) {
+	if(is_null($dbmtime->mtime) || ($pmask->mtime > $dbmtime->mtime) || !$count) {
 		$dbmtime->mtime = $pmask->mtime;
 		$import = true;
 	}
