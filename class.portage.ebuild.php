@@ -12,6 +12,21 @@
 	 * version will start with the first dash and integer. (-1.2.3..)
 	 */
 
+	/**
+	 * FIXME
+	 * There are packages where its upstream version includes a patch level
+	 * or pre release, etc. in its own name. Some examples:
+	 * - fam-2.7.0_p17_p2
+	 * - bash-4.3_p39_pre0
+	 * - tcptrace-6.6.7_p4_p1
+	 * - elinks-0.13_pre_pre20180225
+	 * - xosd-2.2.14_p2_p1
+	 * - xautolock-2.2_p5_p1
+	 * - xkbset-0.5_p5_p1
+	 *
+	 * This is rare, but needs to have the parsing updated to catch them.
+	 */
+
 	class PortageEbuild {
 
 		// Versioning
