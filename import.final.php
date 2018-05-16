@@ -66,11 +66,6 @@
 		$db->query($sql);
 	}
 
-	if(!$cron) {
-		shell::msg("Total hits:");
-		print_r($hits);
-	}
-
 	// Update status
 	if($import_id) {
 		$sql = "UPDATE import_status SET status = 'finish', udate = NOW() WHERE id = ".$db->quote($import_id).";";

@@ -7,9 +7,6 @@
 
 		function __construct($profile = 'portage') {
 
-			global $hits;
-			$hits['package_mask']++;
-
 			$tree =& PortageTree::singleton();
 
 			switch($profile) {

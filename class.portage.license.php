@@ -7,9 +7,6 @@
 
 		function __construct($license = null) {
 
-			global $hits;
-			$hits['license']++;
-
 			if($license)
 				$this->setLicense($license);
 

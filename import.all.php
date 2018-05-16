@@ -10,9 +10,6 @@
 	// Always verbose since we are generally running manually from CLI
 	$verbose = true;
 
-	// Do some performance analysis
-	$hits = array();
-
 	// Run with -cron arg to go quietly into the night.
 	// No code in here to do emerge --sync.  Runs separately.
 	if(in_array("-cron", $argv)) {

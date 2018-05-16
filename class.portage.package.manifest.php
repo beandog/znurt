@@ -18,9 +18,6 @@
 
 		function __construct($category = null, $package = null, $tree = "/usr/portage") {
 
-			global $hits;
-			$hits['manifest']++;
-
 			if($category && $package && $tree)
 				$this->setPackage($category, $package, $tree);
 

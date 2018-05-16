@@ -12,9 +12,6 @@
 
 		function __construct($category) {
 
-			global $hits;
-			$hits['category']++;
-
 			$this->setCategory($category, $tree = "/usr/portage");
 
 		}

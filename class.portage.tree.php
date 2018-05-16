@@ -12,9 +12,6 @@
 
 		public function __construct($tree = "/usr/portage") {
 
-			global $hits;
-			$hits['tree']++;
-
 			if($tree)
 				$this->setTree($tree);
 		}

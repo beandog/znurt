@@ -75,9 +75,6 @@
 
 		function __construct($str) {
 
-			global $hits;
-			$hits['ebuild']++;
-
 			$tree = PortageTree::singleton();
 
 			$this->atom = trim($str);

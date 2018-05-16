@@ -11,9 +11,6 @@
 
 		function __construct($type = 'global', $name = "") {
 
-			global $hits;
-			$hits['use_flag']++;
-
 			$tree =& PortageTree::singleton();
 
 			$dir = $tree->getTree()."/profiles/";
