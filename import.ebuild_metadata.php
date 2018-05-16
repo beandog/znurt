@@ -36,76 +36,77 @@
 	require_once 'class.portage.ebuild.php';
 
 	// Postgres
-	$rs = pg_prepare('insert_ebuild_metadata', 'INSERT INTO ebuild_metadata (ebuild, keyword, value) VALUES ($1, $2, $3);');
+	$rs = pg_prepare('insert_ebuild_metadata_description', 'INSERT INTO ebuild_metadata (ebuild, keyword, value) VALUES ($1, \'description\', $2);');
 	if($rs === false) {
 		echo pg_last_error();
 		echo "\n";
 	}
 
-	// Find all the ebuilds that are missing ebuild arch
-	$sql = "SELECT * FROM missing_metadata;";
-	$arr = $db->getAll($sql);
-	$num_ebuilds = count($arr);
-	$d_num_ebuilds = number_format($num_ebuilds);
+	// Get count of ebuilds with missing metadata
+	$sql = "SELECT COUNT(1) FROM missing_metadata;";
+	$i_insert_count = current(pg_fetch_row(pg_query($sql)));
+	if(!$i_insert_count) {
+		echo "* No ebuild metadata to import\n";
+		goto end_ebuild_metadata;
+	}
 
-	echo "* Remaining # of ebuilds to check: $d_num_ebuilds\n";
+	echo "* Insert:	$i_insert_count\n";
 
-	$total = count($arr);
-	$count = 0;
+	// Import ebuild metadata
+	$sql = "SELECT * FROM missing_metadata\n";
 
-	foreach($arr as $row) {
+	$metadata_rs = pg_query($sql);
+
+	if($metadata_rs === false) {
+		echo "$sql\n";
+		echo pg_last_error();
+		echo "\n";
+		goto end_ebuild_metadata;
+	}
+
+	$counter = 1;
+
+	while($row = pg_fetch_assoc($metadata_rs)) {
+
+		echo "\033[K";
+		echo "* Progress:	$counter/$i_insert_count\r";
+		$counter++;
 
 		extract($row);
 
 		$e = new PortageEbuild("$category_name/$pf");
 
-		$percent_complete = round(($count / $num_ebuilds) * 100);
-		$d_remaining_count = str_pad($count, strlen($num_ebuilds), 0, STR_PAD_LEFT);
-		$d_percent_complete = str_pad($percent_complete, 2, 0, STR_PAD_LEFT)."% ($d_remaining_count/$num_ebuilds)";
-
-		echo "\033[K";
-		echo "* Progress: $d_percent_complete $category_name/$e\r";
-
 		$arr_metadata = $e->metadata();
 
-		if(count($arr_metadata)) {
+		if(!array_key_exists('description', $arr_metadata))
+			continue;
 
-			foreach($arr_metadata as $keyword => $value) {
+		$rs = pg_execute('insert_ebuild_metadata_description', array($ebuild, $arr_metadata['description']));
 
-				// Znurt website only displays description right now, skip the
-				// rest while the others are not needed.
-				if($keyword != 'description')
-					continue;
-
-				if(!empty($value)) {
-					$arr_insert = array(
-						'ebuild' => $ebuild,
-						'keyword' => $keyword,
-						'value' => $value,
-					);
-
-					pg_execute('insert_ebuild_metadata', array_values($arr_insert));
-					if($rs === false) {
-						echo pg_last_error();
-						echo "\n";
-					}
-
-					// Update ebuild metadata in database
-					$sql = "UPDATE package SET description = package_description(id) WHERE id = $ebuild;";
-
-					$rs = pg_query($sql);
-
-					if($rs === false) {
-						echo "$sql\n";
-						echo pg_last_error();
-						echo "\n";
-					}
-				}
-			}
+		if($rs === false) {
+			echo pg_last_error();
+			echo "\n";
 		}
 
-		$count++;
+		// Constantly update the package's description based on the
+		// highest version of the ebuild (not the one most
+		// recently inserted)
+		$sql = "UPDATE package SET description = package_description(id) WHERE id = $ebuild;";
+
+		$rs = pg_query($sql);
+
+		if($rs === false) {
+			echo "$sql\n";
+			echo pg_last_error();
+			echo "\n";
+			continue;
+		}
 
 	}
+
+	if($i_insert_count)
+		echo "\n";
+
+	end_ebuild_metadata:
 
 ?>
