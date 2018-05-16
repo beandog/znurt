@@ -422,6 +422,7 @@
 				'beta' => null,
 				'pre' => null,
 				'rc' => null,
+				'pr' => null,
 				'p' => null,
 				'r' => null,
 			);
