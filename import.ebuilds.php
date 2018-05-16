@@ -55,7 +55,7 @@
 
 		$sha1_sum = sha1_file($filename);
 
-		if($sha1_filename === false) {
+		if($sha1_sum === false) {
 			echo "* Could not get SHA1 hash for file: $filename\n";
 			continue;
 		}
