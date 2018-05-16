@@ -7,19 +7,21 @@
 	// Had it choke out on me when starting from scratch
 	ini_set('memory_limit', -1);
 
-	// Thankfully, I've never really had these break down much, never
-	// had much use for the grouping.
-	$arr_import['base'] = array('arches', 'licenses');
-	$arr_import['packages'] = array('categories', 'packages');
-	$arr_import['ebuilds'] = array('ebuilds');
-	$arr_import['metadata'] = array('ebuild_metadata', 'ebuild_arch', 'ebuild_homepage', 'ebuild_license', 'package_mask', 'ebuild_mask', 'ebuild_ev', 'use_global', 'use_local', 'use_expand', 'ebuild_use');
-
-	foreach($arr_import as $key => $arr) {
-		if($$key) {
-			foreach($arr as $file) {
- 				include "import.$file.php";
-			}
-		}
-	}
+	require_once 'import.arches.php';
+	require_once 'import.licenses.php';
+	require_once 'import.categories.php';
+	require_once 'import.packages.php';
+	require_once 'import.ebuilds.php';
+	require_once 'import.ebuild_metadata.php';
+	require_once 'import.ebuild_arch.php';
+	require_once 'import.ebuild_homepage.php';
+	require_once 'import.ebuild_license.php';
+	require_once 'import.package_mask.php';
+	require_once 'import.ebuild_mask.php';
+	require_once 'import.ebuild_ev.php';
+	require_once 'import.use_global.php';
+	require_once 'import.use_local.php';
+	require_once 'import.use_expand.php';
+	require_once 'import.ebuild_use.php';
 
 ?>
