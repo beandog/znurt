@@ -27,7 +27,7 @@
 	}
 
 	// Find all the ebuilds that are missing ebuild arch
-	$sql = "SELECT * FROM missing_metadata ORDER BY category_name, package_name, pf;";
+	$sql = "SELECT * FROM missing_metadata;";
 	$arr = $db->getAll($sql);
 	$num_ebuilds = count($arr);
 	$d_num_ebuilds = number_format($num_ebuilds);
