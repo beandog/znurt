@@ -402,7 +402,7 @@
 			}
 
 			if(!$this->has_version)
-				return array('version' => '', 'pv' => '');
+				return $arr_components;
 
 			$str = $this->stripPackage($this->atom);
 
