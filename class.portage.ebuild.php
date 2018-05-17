@@ -101,6 +101,8 @@
 
 			$this->arr_metadata_keys = array('depend', 'rdepend', 'slot', 'src_uri', 'restrict', 'homepage', 'license', 'description', 'keywords', 'inherited', 'iuse', 'cdepend', 'pdepend', 'provide', 'eapi', 'properties', 'defined_phases');
 
+			$this->arr_components = array();
+
 		}
 
 		public function __get($var) {
@@ -401,14 +403,26 @@
 		 */
 		function getComponents() {
 
-			$arr_components = array();
-
 			if(count($this->arr_components)) {
 				return $this->arr_components;
 			}
 
-			if(!$this->has_version)
-				return array('version' => '', 'pv' => '');
+			$arr_components = array(
+				'pf' => '',
+				'pv' => '',
+				'pr' => null,
+				'pvr' => '',
+				'alpha' => null,
+				'beta' => null,
+				'pre' => null,
+				'rc' => null,
+				'p' => null,
+				'version' => '',
+			);
+
+			if(!$this->has_version) {
+				return $arr_components;
+			}
 
 			$str = $this->stripPackage($str);
 
