@@ -257,6 +257,8 @@
 			}
 		}
 
+		$arr_homepages = array_unique($arr_homepages);
+
 		return $arr_homepages;
 	}
 
