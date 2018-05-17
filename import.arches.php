@@ -9,7 +9,7 @@
 	}
 
 	// Get and display Portage's arches
-	$a_tree_arches = $tree->getArches(true);
+	$a_tree_arches = $tree->getArches();
 	$i_tree_arches = count($a_tree_arches);
 	echo "* Larry:	$i_tree_arches\n";
 
