@@ -34,11 +34,7 @@
 		echo "\033[K";
 		echo "* Progress: $package/$count_packages\r";
 
-// 		print_r($arr);
-
 		$ext = extendVersions($arr);
-
-// 		print_r($ext); die;
 
 		foreach($ext as $ebuild => $ev) {
 			$arr_update = array('ev' => $ev);
@@ -49,9 +45,5 @@
 
 	if($count_packages)
 		echo "\n";
-
-// 	print_r($arr_packages);
-
-
 
 ?>
