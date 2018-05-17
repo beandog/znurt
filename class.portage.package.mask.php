@@ -28,9 +28,9 @@
 
 		function getMaskedPackages() {
 
-			$arr = file($this->filename, FILE_IGNORE_NEW_LINES);
+			$arr = file($this->filename, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
 
-			$arr = preg_grep("/(^#|^$)/", $arr, PREG_GREP_INVERT);
+			$arr = preg_grep("/(^(\s|#)|^$)/", $arr, PREG_GREP_INVERT);
 
 			sort($arr);
 
