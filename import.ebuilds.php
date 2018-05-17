@@ -356,7 +356,20 @@
 		return $arr_licenses;
 	}
 
+	// Cleanup large variables
+	unset($file_contents);
+	unset($a_larry_hashes);
+	unset($a_larry_ebuilds);
+	unset($a_znurt_ebuilds);
+	unset($a_insert_ebuilds);
+	unset($a_update_ebuilds);
+	unset($a_homepages);
+	unset($a_keywords);
+	unset($a_licenses);
 
 	end_ebuilds:
+
+	unset($a_larry_arches);
+	unset($a_larry_licenses);
 
 ?>
