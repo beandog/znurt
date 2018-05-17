@@ -259,6 +259,18 @@
 		$db->query($sql);
 	}
 
+	// Cleanup large variables
+	unset($a_larry_categories);
+	unset($a_package_manifest_hashes);
+	unset($file_contents);
+	unset($a_larry_cps);
+	unset($a_larry_manifests);
+	unset($a_insert_cps);
+	unset($a_delete_cps);
+	unset($a_distfiles);
+	unset($a_update_cps);
+	unset($a_distfiles);
+
 	end_packages:
 
 ?>
