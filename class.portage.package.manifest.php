@@ -138,7 +138,7 @@
 				if(!$this->hash) {
 					$str = $this->hash = sha1($this->getManifest());
 				} else {
-					$str =& $this->hash;
+					$str = $this->hash;
 				}
 
 			} else {
