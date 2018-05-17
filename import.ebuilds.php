@@ -24,6 +24,9 @@
 	// Get the arches
 	$a_larry_arches = $tree->getArches();
 
+	// Get the portage licenses
+	$a_larry_licenses = $tree->getLicenses();
+
 	// Procedure to enter all data into ebuild table and return the resulting new primary key
 	// FIXME will fail if the package is not in the database
 	$rs = pg_prepare('insert_ebuild', 'INSERT INTO ebuild (package, pf, pv, pr, pvr, alpha, beta, pre, rc, p, version, slot, hash, description, keywords, license, iuse) SELECT vp.package, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17 FROM view_package vp WHERE vp.cp = $1 RETURNING ebuild.id;');
@@ -40,6 +43,13 @@
 
 	// FIXME will fail if the arch is not in the database
 	$rs = pg_prepare('insert_ebuild_arch', 'INSERT INTO ebuild_arch (ebuild, status, arch) SELECT $1, $2, a.id FROM arch a WHERE a.name = $3;');
+	if($rs === false) {
+		echo pg_last_error();
+		echo "\n";
+	}
+
+	// FIXME will fail if the license is not in the database
+	$rs = pg_prepare('insert_ebuild_license', 'INSERT INTO ebuild_license (ebuild, license) SELECT $1, l.id FROM license l WHERE l.name = $2');
 	if($rs === false) {
 		echo pg_last_error();
 		echo "\n";
@@ -232,6 +242,20 @@
 
 		}
 
+		// Insert ebuild licenses
+		$a_licenses = arrLicenses($a_metadata['license'], $a_larry_licenses);
+		foreach($a_licenses as $str) {
+
+			$rs = pg_execute('insert_ebuild_license', array($id, $str));
+
+			if($rs === false) {
+				echo pg_last_error();
+				echo "\n";
+				continue;
+			}
+
+		}
+
 	}
 
 	if($i_update_count || $i_insert_count)
@@ -306,6 +330,32 @@
 
 		return $arr_keywords;
 	}
+
+	/**
+	 * Create an array of the ebuild's licenses
+	 *
+	 * @param string licenses
+	 * @return array
+	 */
+	function arrLicenses($str, $licenses) {
+
+		$arr = explode(' ', $str);
+
+		if(!count($arr))
+			return array();
+
+		$arr_licenses = array();
+
+		foreach($arr as $str) {
+			if(in_array($str, $licenses))
+				$arr_licenses[] = $str;
+		}
+
+		$arr_licenses = array_unique($arr_licenses);
+
+		return $arr_licenses;
+	}
+
 
 	end_ebuilds:
 
