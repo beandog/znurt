@@ -120,12 +120,12 @@
 
 		public function getMaintainers() {
 
-			$arr = array();
-
 			if(!$this->metadata_filename)
-				return $arr;
+				return array();
 
 			$obj = $this->getMetadataXML();
+
+			$arr = array();
 
 			if($obj->maintainer) {
 				$x = 0;
@@ -197,10 +197,10 @@
 
 		public function getUseFlags() {
 
-			$arr = array();
-
 			if(!$this->metadata_filename)
-				return $arr;
+				return array();
+
+			$arr = array();
 
 			$obj = $this->getMetadataXML();
 
