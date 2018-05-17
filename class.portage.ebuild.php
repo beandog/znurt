@@ -539,7 +539,7 @@
 			if(!is_null($this->getSlot())) {
 				$str = str_replace(":".$this->getSlot(), "", $str);
 			} else
-				$str =& $this->atom;
+				$str = $this->atom;
 
 			return $str;
 
