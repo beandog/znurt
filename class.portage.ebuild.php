@@ -386,12 +386,13 @@
 		// This could really use a better name.
 		function getSuffix($var) {
 
-			if(in_array($var, array('_alpha', '_beta', '_pre', '_rc', '_p', 'pr', 'version'))) {
-				$arr = $this->getComponents();
-				if($var[0] == "_")
-					$str = str_replace("_", "", $var);
-				return $this->$var = $arr[$str];
-			}
+			if(!in_array($var, array('_alpha', '_beta', '_pre', '_rc', '_p', 'pr', 'version')))
+				return null;
+
+			$arr = $this->getComponents();
+			if($var[0] == "_")
+				$str = str_replace("_", "", $var);
+			return $this->$var = $arr[$str];
 
 		}
 
