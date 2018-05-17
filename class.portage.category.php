@@ -4,7 +4,6 @@
 
 		private $name;
 		protected $dir;
-		protected $cache_dir;
 		private $metadata;
 		private $description;
 
@@ -32,7 +31,6 @@
 			if(is_dir($dir)) {
 				$this->name = $category;
 				$this->dir = $dir;
-				$this->cache_dir = "$tree/metadata/md5-cache/$category";
 				$this->metadata = "$dir/metadata.xml";
 			}
 
