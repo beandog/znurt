@@ -364,8 +364,8 @@
 
  			$str = $this->getPackageVersionMinusRevision();
 
- 			if($arr['r'])
- 				$str .= "-r".$arr['r'];
+			if($arr['pr'])
+				$str .= "-r".$arr['pr'];
  			return $this->$var = $str;
 		}
 
