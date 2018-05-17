@@ -184,40 +184,6 @@
 			echo "\n";
 		}
 
-
-						/*
-						// Caught something my regexp can't find -- that is, recompiling the filename from the parsed values didn't work because the file doesn't exist
-						if($source = '') {
-							echo "FIXME - couldn't find ebuild filename\n";
-							print_r($arr);
-							echo "\n";
-							$fixme = true;
-						}
-
-						if(!$e->filesize) {
-							echo "FIXME - empty filesize for ebuild -- non-existant?\n";
-							print_r($arr);
-							echo "\n";
-							$fixme = true;
-						}
-
-						if(!$e->hash) {
-							echo "FIXME - empty hash for ebuild -- non-existant?\n";
-							print_r($arr);
-							echo "\n";
-							$fixme = true;
-						}
-
-						if($fixme)
-							continue;
-
-						$rs = pg_execute('insert_ebuild', array_values($arr));
-						if($rs === false) {
-							echo pg_last_error()."\n";
-							echo "\n";
-						}
-						*/
-
 	}
 
 	if($i_update_count || $i_insert_count)
