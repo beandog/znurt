@@ -25,6 +25,7 @@
 	$a_larry_arches = $tree->getArches();
 
 	// Procedure to enter all data into ebuild table and return the resulting new primary key
+	// FIXME will fail if the package is not in the database
 	$rs = pg_prepare('insert_ebuild', 'INSERT INTO ebuild (package, pf, pv, pr, pvr, alpha, beta, pre, rc, p, version, slot, hash, description, keywords, license, iuse) SELECT vp.package, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17 FROM view_package vp WHERE vp.cp = $1 RETURNING ebuild.id;');
 	if($rs === false) {
 		echo pg_last_error();
@@ -37,6 +38,7 @@
 		echo "\n";
 	}
 
+	// FIXME will fail if the arch is not in the database
 	$rs = pg_prepare('insert_ebuild_arch', 'INSERT INTO ebuild_arch (ebuild, status, arch) SELECT $1, $2, a.id FROM arch a WHERE a.name = $3;');
 	if($rs === false) {
 		echo pg_last_error();
