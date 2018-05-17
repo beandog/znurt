@@ -12,21 +12,6 @@
 	 * version will start with the first dash and integer. (-1.2.3..)
 	 */
 
-	/**
-	 * FIXME
-	 * There are packages where its upstream version includes a patch level
-	 * or pre release, etc. in its own name. Some examples:
-	 * - fam-2.7.0_p17_p2
-	 * - bash-4.3_p39_pre0
-	 * - tcptrace-6.6.7_p4_p1
-	 * - elinks-0.13_pre_pre20180225
-	 * - xosd-2.2.14_p2_p1
-	 * - xautolock-2.2_p5_p1
-	 * - xkbset-0.5_p5_p1
-	 *
-	 * This is rare, but needs to have the parsing updated to catch them.
-	 */
-
 	class PortageEbuild {
 
 		// Versioning
@@ -80,13 +65,19 @@
 
 		// File mtimes
 		private $portage_mtime;
+		private $changelog_mtime;
 		private $metadata_mtime;
 		private $cache_mtime;
 
 		// hash sums
 		private $hash;
 
+
+
 		function __construct($str) {
+
+			global $hits;
+			$hits['ebuild']++;
 
 			$tree = PortageTree::singleton();
 
@@ -114,93 +105,90 @@
 
 		public function __get($var) {
 
-			if(!(isset($this->var) && is_null($this->$var)))
-				return null;
+			if(is_null($this->$var)) {
 
-			if(in_array($var, $this->arr_metadata_keys)) {
+				if(in_array($var, $this->arr_metadata_keys)) {
 
-				if(is_null($this->arr_metadata))
-					$this->arr_metadata = $this->metadata();
-				return $this->arr_metadata[$var];
-			}
+					if(is_null($this->arr_metadata))
+						$this->arr_metadata = $this->metadata();
+					return $this->arr_metadata[$var];
+				}
 
-			switch($var) {
+				switch($var) {
 
-				// Suffixes
-				case 'version':
-				case '_alpha':
-				case '_beta':
-				case '_pre':
-				case '_rc':
-				case '_p':
-					return $this->getSuffix($var);
-					break;
+					// Suffixes
+					case 'version':
+					case '_alpha':
+					case '_beta':
+					case '_pre':
+					case '_rc':
+					case '_p':
+						return $this->getSuffix($var);
 
-				// 'r' is the only one that could
-				// get a bit confusing, since there's so many
-				// other ways to get these.
-				// 'pr' is the correct way, since portage
-				// has a stored variable for it.
-				case 'pr':
-				case 'r':
-				case '_r':
-				case 'revision':
-					return $this->getSuffix('pr');
-					break;
+					// 'r' is the only one that could
+					// get a bit confusing, since there's so many
+					// other ways to get these.
+					// 'pr' is the correct way, since portage
+					// has a stored variable for it.
+					case 'pr':
+					case 'r':
+					case '_r':
+					case 'revision':
+						return $this->getSuffix('pr');
+						break;
 
-				// Other
-				case 'category':
-					return $this->getCategory();
-					break;
+					// Other
+					case 'category':
+						return $this->getCategory();
+						break;
 
-				case 'slot':
-					return $this->getSlot();
-					break;
+					case 'slot':
+						return $this->getSlot();
+						break;
 
-				// Ebuild Variables
-				case 'p':
-					return $this->getPackageNameAndVersionMinusRevision();
-					break;
+					// Ebuild Variables
+					case 'p':
+						return $this->getPackageNameAndVersionMinusRevision();
+						break;
 
-				case 'pn':
-				case 'package':
-					return $this->getPackageName();
-					break;
+					case 'pn':
+					case 'package':
+						return $this->getPackageName();
+						break;
 
-				case 'pf':
-					return $this->getFullPackageName();
-					break;
+					case 'pf':
+						return $this->getFullPackageName();
+						break;
 
-				case 'pv':
-					return $this->getPackageVersionMinusRevision();
-					break;
+					case 'pv':
+						return $this->getPackageVersionMinusRevision();
+						break;
 
-				case 'pvr':
-					return $this->getPackageVersionAndRevision();
-					break;
+					case 'pvr':
+						return $this->getPackageVersionAndRevision();
+						break;
 
-				case 'portage_mtime':
-					return $this->getMtime();
-					break;
+					case 'portage_mtime':
+						return $this->getMtime();
+						break;
 
-				case 'filename':
-					return $this->filename;
-					break;
+					case 'filename':
+						return $this->filename;
+						break;
 
-				case 'filesize':
-					return $this->getFilesize();
-					break;
+					case 'filesize':
+						return $this->getFilesize();
+						break;
 
-				case 'source':
-					$this->source = '';
-					if(file_exists($this->filename))
-						$this->source = file_get_contents($this->filename);
-					return $this->source;
-					break;
+					case 'source':
+						return $this->source = file_get_contents($this->filename);
+						break;
 
-				case 'hash':
-					return $this->hash = $this->getHash();
-					break;
+					case 'hash':
+						return $this->hash = $this->getHash();
+						break;
+
+				}
 
 			}
 
@@ -220,21 +208,20 @@
 			if(!is_null($this->arr_metadata))
 				return $this->arr_metadata;
 
-			foreach($this->arr_metadata_keys as $key)
-				$arr_metadata[$key] = '';
-
 			if(!file_exists($this->filename) || !file_exists($this->filename_cache))
-				return $arr_metadata;
+				return array();
 
 			$file = file($this->filename_cache, FILE_IGNORE_NEW_LINES);
 
 			// Kill off the empty lines
 			$arr = array_slice($file, 0, 17, true);
 
-			foreach($this->arr_metadata_keys as $key) {
+			$arr_metadata = array();
 
-				$key = strtolower($key);
-				$pattern = "/^_?".$key."_?=/i";
+			foreach($this->arr_metadata_keys as $key => $value) {
+				if(!($value == 'eclasses' || $value == 'md5'))
+					$value = strtoupper($value);
+				$pattern = "/^_?".$value."_?=/i";
 				$arr_grep = preg_grep($pattern, $arr);
 				if(count($arr_grep)) {
 					$str = current($arr_grep);
@@ -243,10 +230,18 @@
 					$str = implode('=', $arr_slice);
 
 					$arr_metadata[$key] = $str;
+				} else {
+					$arr_metadata[$key] = '';
 				}
 			}
 
-			return $arr_metadata;
+			if(count($this->arr_metadata_keys) == count($arr_metadata))
+				$arr = array_combine($this->arr_metadata_keys, $arr_metadata);
+			// FIXME log an error if no metadata
+			else
+				$arr = array();
+
+			return $arr;
 
 		}
 
@@ -260,7 +255,13 @@
 			if(!count($arr) || count($arr) == 1)
 				$this->$var = null;
 			else {
+
+				// Old code from another class, for reference
+// 				$atom = preg_replace('/^!?[><]?=?~?/', '', $atom);
+// 				$tmp = explode('/', $atom);
+
 				$str = current($arr);
+// 				$str = preg_replace("/[^a-z_-]/", "", $str);
 				$this->$var = $str;
 			}
 
@@ -292,6 +293,24 @@
 		}
 
 		function getPackageName() {
+
+// 			$var = 'pn';
+//
+// 			$str = $this->stripCategory();
+// 			$str = $this->stripSlot($str);
+//
+// 			// Will only return the package name
+//  			$pattern = '/\-\d+((\.?\d+)+)?([A-Za-z]+)?((_(alpha|beta|pre|rc|p)\d*)+)?(\-r\d+)?(\:.+)?$/';
+//  			$arr = preg_split($pattern, $str);
+//
+//  			// Check to see if it has a version or not (p.mask)
+//  			if(count($arr) == 1)
+//  				$this->has_version = false;
+//
+// 			$this->$var = $arr[0];
+//
+// 			return $this->$var;
+
 
 			return $this->pn;
 
@@ -353,8 +372,7 @@
 			$var = 'slot';
 
 			if(strpos($this->atom, ':') > 0) {
-				$arr = explode(':', $this->atom);
-				$str = end($arr);
+				$str = end(explode(':', $this->atom));
 			}
 			else
 				$str = 0;
@@ -370,11 +388,8 @@
 
 			if(in_array($var, array('_alpha', '_beta', '_pre', '_rc', '_p', 'pr', 'version'))) {
 				$arr = $this->getComponents();
-				$str = '';
 				if($var[0] == "_")
 					$str = str_replace("_", "", $var);
-				if(!$str)
-					return null;
 				return $this->$var = $arr[$str];
 			}
 
@@ -385,26 +400,16 @@
 		 */
 		function getComponents() {
 
-			$arr_components = array(
-				'pv' => '',
-				'version' => '',
-				'alpha' => null,
-				'beta' => null,
-				'pre' => null,
-				'rc' => null,
-				'pr' => null,
-				'p' => null,
-				'r' => null,
-			);
+			$arr_components = array();
 
 			if(count($this->arr_components)) {
 				return $this->arr_components;
 			}
 
 			if(!$this->has_version)
-				return $arr_components;
+				return array('version' => '', 'pv' => '');
 
-			$str = $this->stripPackage($this->atom);
+			$str = $this->stripPackage($str);
 
 			$arr = explode("-", $str);
 
@@ -463,12 +468,8 @@
 		function getHash() {
 
 			if(!$this->hash) {
-				if(!file_exists($this->filename)) {
-					$this->hash = '';
-				} else {
-					$contents = file_get_contents($this->filename);
-					$this->hash = sha1($contents);
-				}
+				$contents = file_get_contents($this->filename);
+				$this->hash = sha1($contents);
 			}
 
 			return $this->hash;
@@ -477,10 +478,11 @@
 
 		public function getFilesize() {
 
-			if(is_null($this->filesize) && file_exists($this->filename))
-				return $this->filesize = filesize($this->filename);
-			else
-				return $this->filesize = 0;
+			if(!$this->filesize) {
+				$this->filesize = filesize($this->filename);
+			}
+
+			return $this->filesize;
 
 		}
 
@@ -539,7 +541,7 @@
 			if(!is_null($this->getSlot())) {
 				$str = str_replace(":".$this->getSlot(), "", $str);
 			} else
-				$str = $this->atom;
+				$str =& $this->atom;
 
 			return $str;
 
