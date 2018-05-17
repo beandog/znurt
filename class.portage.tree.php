@@ -7,9 +7,6 @@
 		// Strings
 		protected $tree;
 
-		// Arrays
-		protected $arr_licenses;
-
 		public function __construct($tree = "/usr/portage") {
 
 			if($tree)
@@ -77,8 +74,6 @@
 				$arr[] = $filename;
 			}
 
-			$this->arr_eclasses = $arr;
-
 			return $arr;
 
 		}
@@ -91,8 +86,6 @@
 			foreach($scandir as $filename) {
 				$arr[] = $filename;
 			}
-
-			$this->arr_licenses = $arr;
 
 			return $arr;
 
