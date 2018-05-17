@@ -4,9 +4,6 @@
 
 	require_once 'header.php';
 
-	// Had it choke out on me when starting from scratch
-	ini_set('memory_limit', -1);
-
 	require_once 'import.arches.php';
 	require_once 'import.licenses.php';
 	require_once 'import.categories.php';
