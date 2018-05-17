@@ -12,9 +12,6 @@
 	require_once 'import.categories.php';
 	require_once 'import.packages.php';
 	require_once 'import.ebuilds.php';
-	require_once 'import.ebuild_metadata.php';
-	require_once 'import.ebuild_arch.php';
-	require_once 'import.ebuild_homepage.php';
 	require_once 'import.ebuild_license.php';
 	require_once 'import.package_mask.php';
 	require_once 'import.ebuild_mask.php';
