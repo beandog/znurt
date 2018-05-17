@@ -195,7 +195,6 @@
 		$rs = pg_execute('insert_ebuild', array_values($a_insert_ebuild));
 
 		if($rs === false) {
-			echo "$sql\n";
 			echo pg_last_error();
 			echo "\n";
 			continue;
@@ -210,7 +209,6 @@
 			$rs = pg_execute('insert_homepage', array($id, $homepage));
 
 			if($rs === false) {
-				echo "$sql\n";
 				echo pg_last_error();
 				echo "\n";
 				continue;
