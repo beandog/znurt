@@ -114,94 +114,93 @@
 
 		public function __get($var) {
 
-			if(is_null($this->$var)) {
+			if(!(isset($this->var) && is_null($this->$var)))
+				return null;
 
-				if(in_array($var, $this->arr_metadata_keys)) {
+			if(in_array($var, $this->arr_metadata_keys)) {
 
-					if(is_null($this->arr_metadata))
-						$this->arr_metadata = $this->metadata();
-					return $this->arr_metadata[$var];
-				}
+				if(is_null($this->arr_metadata))
+					$this->arr_metadata = $this->metadata();
+				return $this->arr_metadata[$var];
+			}
 
-				switch($var) {
+			switch($var) {
 
-					// Suffixes
-					case 'version':
-					case '_alpha':
-					case '_beta':
-					case '_pre':
-					case '_rc':
-					case '_p':
-						return $this->getSuffix($var);
-						break;
+				// Suffixes
+				case 'version':
+				case '_alpha':
+				case '_beta':
+				case '_pre':
+				case '_rc':
+				case '_p':
+					return $this->getSuffix($var);
+					break;
 
-					// 'r' is the only one that could
-					// get a bit confusing, since there's so many
-					// other ways to get these.
-					// 'pr' is the correct way, since portage
-					// has a stored variable for it.
-					case 'pr':
-					case 'r':
-					case '_r':
-					case 'revision':
-						return $this->getSuffix('pr');
-						break;
+				// 'r' is the only one that could
+				// get a bit confusing, since there's so many
+				// other ways to get these.
+				// 'pr' is the correct way, since portage
+				// has a stored variable for it.
+				case 'pr':
+				case 'r':
+				case '_r':
+				case 'revision':
+					return $this->getSuffix('pr');
+					break;
 
-					// Other
-					case 'category':
-						return $this->getCategory();
-						break;
+				// Other
+				case 'category':
+					return $this->getCategory();
+					break;
 
-					case 'slot':
-						return $this->getSlot();
-						break;
+				case 'slot':
+					return $this->getSlot();
+					break;
 
-					// Ebuild Variables
-					case 'p':
-						return $this->getPackageNameAndVersionMinusRevision();
-						break;
+				// Ebuild Variables
+				case 'p':
+					return $this->getPackageNameAndVersionMinusRevision();
+					break;
 
-					case 'pn':
-					case 'package':
-						return $this->getPackageName();
-						break;
+				case 'pn':
+				case 'package':
+					return $this->getPackageName();
+					break;
 
-					case 'pf':
-						return $this->getFullPackageName();
-						break;
+				case 'pf':
+					return $this->getFullPackageName();
+					break;
 
-					case 'pv':
-						return $this->getPackageVersionMinusRevision();
-						break;
+				case 'pv':
+					return $this->getPackageVersionMinusRevision();
+					break;
 
-					case 'pvr':
-						return $this->getPackageVersionAndRevision();
-						break;
+				case 'pvr':
+					return $this->getPackageVersionAndRevision();
+					break;
 
-					case 'portage_mtime':
-						return $this->getMtime();
-						break;
+				case 'portage_mtime':
+					return $this->getMtime();
+					break;
 
-					case 'filename':
-						return $this->filename;
-						break;
+				case 'filename':
+					return $this->filename;
+					break;
 
-					case 'filesize':
-						return $this->getFilesize();
-						break;
+				case 'filesize':
+					return $this->getFilesize();
+					break;
 
-					case 'source':
-						$this->source = '';
-						if(file_exists($this->filename))
-							$this->source = file_get_contents($this->filename);
-						return $this->source;
-						break;
+				case 'source':
+					$this->source = '';
+					if(file_exists($this->filename))
+						$this->source = file_get_contents($this->filename);
+					return $this->source;
+					break;
 
-					case 'hash':
-						return $this->hash = $this->getHash();
-						break;
-
-				}
+				case 'hash':
+					return $this->hash = $this->getHash();
+					break;
 
 			}
 
