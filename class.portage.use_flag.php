@@ -3,7 +3,6 @@
 	class PortageUseFlag {
 
 		private $name;
-		private $description;
 		private $global;
 		private $local;
 
@@ -45,7 +44,7 @@
 
 		public function getUseFlags() {
 
-				return $this->arrUseFlags($this->filename);
+			return $this->arrUseFlags($this->filename);
 
 		}
 
@@ -67,7 +66,6 @@
 
 				}
 
-// 				$arr = explode(" - ", $str);
 				$arr = preg_split("/\s+-\s+/", $str);
 
 				$name = array_shift($arr);
@@ -89,6 +87,6 @@
 			return $arr_use_flags;
 		}
 
-
 	}
+
 ?>
