@@ -76,7 +76,7 @@
 			// going to write a prepare statement right now.
 
 			$sql = "INSERT INTO package_mask (package, atom, lt, gt, eq, ar, av, pf, pv, pr, pvr, alpha, beta, pre, rc, p, version, status) SELECT p.id, ".$db->quote($str).", ".$arr_pg_bool[intval($a->lt)].",  ".$arr_pg_bool[intval($a->gt)].",  ".$arr_pg_bool[intval($a->eq)].",  ".$arr_pg_bool[intval($a->ar)].",  ".$arr_pg_bool[intval($a->av)].", ".null2str($a->pf).", ".null2str($a->pv).", ".null2str($a->pr).", ".null2str($a->pvr).", ".null2str($a->_alpha).", ".null2str($a->_beta).", ".null2str($a->_pre).", ".null2str($a->_rc).", ".null2str($a->_p).", ".null2str($a->version).", 1  FROM category c INNER JOIN package p ON p.category = c.id WHERE c.name = ".$db->quote($a->category)." AND p.name = ".$db->quote($a->pn).";";
-			$db->query($sql);
+			pg_query($sql);
 
 		}
 

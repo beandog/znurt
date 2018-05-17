@@ -19,13 +19,13 @@
 	$count = current(pg_fetch_row(pg_query($sql)))
 	if($count == 0) {
 		$sql = "ALTER SEQUENCE eclass_id_seq RESTART WITH 1;";
-		$db->query($sql);
+		pg_query($sql);
 	}
 
 	if(count($arr_diff['delete'])) {
 		foreach($arr_diff['delete'] as $name) {
 			$sql = "DELETE FROM $table WHERE name = ".$db->quote($name).";";
-			$db->query($sql);
+			pg_query($sql);
 		}
 	}
 

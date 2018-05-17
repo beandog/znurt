@@ -256,7 +256,7 @@
 
 	if(!$count) {
 		$sql = "ALTER SEQUENCE package_id_seq RESTART WITH 1;";
-		$db->query($sql);
+		pg_query($sql);
 	}
 
 	// Cleanup large variables

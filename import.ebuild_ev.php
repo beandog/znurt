@@ -15,7 +15,7 @@
             WHEN e.alpha IS NOT NULL THEN 1
             ELSE 5
         END WHERE e.status = 1 OR e.lvl = 0;";
-	$db->query($sql);
+	pg_query($sql);
 
 	$sql = "SELECT * FROM missing_ev;";
 	$arr = $db->getAll($sql);

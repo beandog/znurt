@@ -19,7 +19,7 @@
 
 	// Reset old entries that were new
 	$sql = "DELETE FROM ebuild_mask WHERE status = 1;";
-	$db->query($sql);
+	pg_query($sql);
 
 	// Nothing to do if there are no new ebuilds
 	$import = false;
@@ -50,22 +50,22 @@
 
 		// Insert entries where the entire package is masked
 		$sql = "INSERT INTO ebuild_mask SELECT pm.id, e.id, 1 FROM ebuild e INNER JOIN package p ON e.package = p.id INNER JOIN package_mask pm ON pm.package = e.package WHERE e.status IN($e_status) AND pm.status = $pm_status AND pm.pvr = '' AND lt = FALSE AND gt = FALSE AND eq = FALSE AND ar = FALSE AND av = FALSE;";
-		$db->query($sql);
+		pg_query($sql);
 
 		// Insert entries where it's an exact package and version
 		$sql = "INSERT INTO ebuild_mask SELECT pm.id, e.id, 1 FROM ebuild e INNER JOIN package p ON e.package = p.id INNER JOIN package_mask pm ON pm.package = e.package WHERE e.status IN($e_status) AND pm.status = $pm_status AND pm.pvr = e.pvr AND lt = FALSE AND gt = FALSE AND eq = TRUE AND ar = FALSE AND av = FALSE;";
-		$db->query($sql);
+		pg_query($sql);
 
 		// Insert entries where atom is like:
 		// =media-video/mplayer-1.0*
 		// Specifically IGNORE gt and lt
 		$sql = "INSERT INTO ebuild_mask SELECT pm.id, e.id, 1 FROM ebuild e INNER JOIN package p ON e.package = p.id INNER JOIN package_mask pm ON pm.package = e.package WHERE e.status IN($e_status) AND pm.status = $pm_status AND e.pvr LIKE (pm.pvr || '%') AND eq = TRUE AND ar = FALSE AND av = TRUE;";
-		$db->query($sql);
+		pg_query($sql);
 
 		// Insert entries where atom is like:
 		// ~media-video/mplayer-1.0
 		$sql = "INSERT INTO ebuild_mask SELECT pm.id, e.id, 1 FROM ebuild e INNER JOIN package p ON e.package = p.id INNER JOIN package_mask pm ON pm.package = e.package WHERE e.status IN($e_status) AND pm.status = $pm_status AND pm.pvr = e.version AND lt = FALSE AND gt = FALSE AND eq = FALSE AND ar = TRUE AND av = FALSE;";
-		$db->query($sql);
+		pg_query($sql);
 
 		// All others
 		$sql = "SELECT pm.id AS pm_id, pm.package, pm.atom, pm.version AS pm_version, pm.gt, pm.lt, pm.eq, pl.level AS pm_level, e.version AS ebuild_version, el.level AS ebuild_level, e.id AS ebuild FROM package_mask pm INNER JOIN view_pmask_level pl ON pl.id = pm.id INNER JOIN ebuild e ON e.package = pm.package INNER JOIN view_ebuild_level el ON el.id = e.id WHERE e.status IN($e_status) AND pm.status = $pm_status AND (pm.gt = TRUE OR pm.lt = TRUE) ORDER BY pm.gt, pm.eq, pm.package;";
@@ -174,6 +174,5 @@
 			}
 		}
 	}
-
 
 ?>
