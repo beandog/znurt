@@ -29,7 +29,7 @@
 			if($str[0] == '<')
 				$this->lt = true;
 
-			if($str[0] == '=' || $str[1] == '=')
+			if(strlen($str) > 1 && ($str[0] == '=' || $str[1] == '='))
 				$this->eq = true;
 
 			if($str[0] == '~')
