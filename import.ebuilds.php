@@ -21,7 +21,15 @@
 	require_once 'class.portage.ebuild.php';
 	require_once 'class.db.ebuild.php';
 
-	$rs = pg_prepare('insert_ebuild', 'INSERT INTO ebuild (package, pf, pv, pr, pvr, alpha, beta, pre, rc, p, version, slot, hash, description, keywords, license, iuse) SELECT vp.package, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17 FROM view_package vp WHERE vp.cp = $1;');
+
+	// Procedure to enter all data into ebuild table and return the resulting new primary key
+	$rs = pg_prepare('insert_ebuild', 'INSERT INTO ebuild (package, pf, pv, pr, pvr, alpha, beta, pre, rc, p, version, slot, hash, description, keywords, license, iuse) SELECT vp.package, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17 FROM view_package vp WHERE vp.cp = $1 RETURNING ebuild.id;');
+	if($rs === false) {
+		echo pg_last_error();
+		echo "\n";
+	}
+
+	$rs = pg_prepare('insert_homepage', 'INSERT INTO ebuild_homepage (ebuild, homepage) VALUES ($1, $2);');
 	if($rs === false) {
 		echo pg_last_error();
 		echo "\n";
@@ -182,12 +190,53 @@
 			echo "$sql\n";
 			echo pg_last_error();
 			echo "\n";
+			continue;
+		}
+
+		// Get the primary key from above using RETURNING
+		$id = current(pg_fetch_row($rs));
+
+		$a_homepages = arrHomepages($a_metadata['homepage']);
+		foreach($a_homepages as $homepage) {
+
+			$rs = pg_execute('insert_homepage', array($id, $homepage));
+
+			if($rs === false) {
+				echo "$sql\n";
+				echo pg_last_error();
+				echo "\n";
+				continue;
+			}
+
 		}
 
 	}
 
 	if($i_update_count || $i_insert_count)
 		echo "\n";
+
+	/**
+	 * Create an array of the arch keywords
+	 *
+	 * @param string keywords
+	 * @return array
+	 */
+	function arrHomepages($str) {
+
+		$arr = explode(' ', $str);
+
+		$arr_homepages = array();
+
+		if(count($arr)) {
+
+			foreach($arr as $str) {
+				if(substr($str, 0, 4) == "http" || substr($str, 0, 6) == "ftp://" || substr($str, 0, 9) == "gopher://")
+					$arr_homepages[] = $str;
+			}
+		}
+
+		return $arr_homepages;
+	}
 
 	end_ebuilds:
 
