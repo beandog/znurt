@@ -34,9 +34,6 @@
 
 		$dbmtime = new DBMtime($u->filename);
 
-		$sql = "SELECT COUNT(1) FROM use WHERE $where;";
-		$db_count = $db->getOne($sql);
-
 		if(is_null($dbmtime->mtime) || ($filemtime > $dbmtime->mtime) ) {
 			$dbmtime->mtime = $filemtime;
 		}

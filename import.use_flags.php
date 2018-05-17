@@ -27,13 +27,13 @@
   	foreach($arr_use_flags[$type] as $cp => $arr_package_use_flags) {
 
   		$sql = "SELECT package FROM view_package WHERE cp = ".$db->quote($cp);
-  		$package = $db->getOne($sql);
+		$package = current(pg_fetch_row(pg_query($sql)))
 
   		foreach($arr_package_use_flags as $name => $arr) {
 			$where = "package = $package";
 
 			$sql = "SELECT COUNT(1) FROM use WHERE $where;";
-			$db_count = $db->getOne($sql);
+			$db_count = current(pg_fetch_row(pg_query($sql)))
 
 			if(is_null($dbmtime->mtime)) {
 

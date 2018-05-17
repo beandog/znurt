@@ -16,7 +16,7 @@
 
 	// Reset sequence if table is empty
 	$sql = "SELECT COUNT(1) FROM eclass;";
-	$count = $db->getOne($sql);
+	$count = current(pg_fetch_row(pg_query($sql)))
 	if($count == 0) {
 		$sql = "ALTER SEQUENCE eclass_id_seq RESTART WITH 1;";
 		$db->query($sql);

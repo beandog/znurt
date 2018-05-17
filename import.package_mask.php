@@ -34,7 +34,7 @@
 	$import = false;
 
 	$sql = "SELECT COUNT(1) FROM package_mask WHERE status = 0;";
-	$count = $db->getOne($sql);
+	$count = current(pg_fetch_row(pg_query($sql)))
 
 	if(is_null($dbmtime->mtime) || ($pmask->mtime > $dbmtime->mtime) || !$count) {
 		$dbmtime->mtime = $pmask->mtime;

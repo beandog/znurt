@@ -252,9 +252,9 @@
 
 	// Find the packages updated since last time
 	$sql = "SELECT COUNT(1) FROM package;";
-	$count = $db->getOne($sql);
+	$count = current(pg_fetch_row(pg_query($sql)))
 
-	if($count === "0") {
+	if(!$count) {
 		$sql = "ALTER SEQUENCE package_id_seq RESTART WITH 1;";
 		$db->query($sql);
 	}

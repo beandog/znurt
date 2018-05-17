@@ -26,9 +26,6 @@
 
  	$dbmtime = new DBMtime($u->filename);
 
- 	$sql = "SELECT COUNT(1) FROM use WHERE $where;";
- 	$db_count = $db->getOne($sql);
-
  	$arr_new[$type] = $arr_delete[$type] = array();
 
  	if(is_null($dbmtime->mtime)) {

@@ -24,14 +24,14 @@
 	// Nothing to do if there are no new ebuilds
 	$import = false;
 	$sql = "SELECT COUNT(1) FROM ebuild WHERE status = 1;";
-	$count = $db->getOne($sql);
+	$count = current(pg_fetch_row(pg_query($sql)))
 	if($count)
 		$import = true;
 
 	// If there are *new* entries in package_mask, then we are going
 	// to check against those.  Otherwise, check against the old ones.
 	$sql = "SELECT COUNT(1) FROM package_mask WHERE status = 1;";
-	$count = $db->getOne($sql);
+	$count = current(pg_fetch_row(pg_query($sql)))
 	if($count)
 		$pm_status = 1;
 	else
@@ -40,7 +40,7 @@
 	// If, for some reason, there are no ebuilds masked, check
 	// all the ebuilds, not just the new ones.
 	$sql = "SELECT COUNT(1) FROM ebuild_mask;";
-	$count = $db->getOne($sql);
+	$count = current(pg_fetch_row(pg_query($sql)))
 	if(!$count)
 		$e_status = "0,1";
 	else

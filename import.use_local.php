@@ -42,7 +42,7 @@
 			echo "* Progress: $cp\r";
 
 			$sql = "SELECT package FROM view_package WHERE cp = ".$db->quote($cp).";";
-			$package = $db->getOne($sql);
+			$package = current(pg_fetch_row(pg_query($sql)))
 
 			foreach($arr_package_use_flags as $name => $arr) {
 				extract($arr);
