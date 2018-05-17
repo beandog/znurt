@@ -46,4 +46,9 @@
 		pg_query($sql);
 	}
 
+	// Cleanup large variables
+	unset($a_tree_licenses);
+	unset($a_znurt_licenses);
+	unset($a_import_diff);
+
 ?>

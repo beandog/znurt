@@ -67,4 +67,7 @@
 		}
 	}
 
+	// Cleanup large variables
+	unset($a_import_diff);
+
 ?>
