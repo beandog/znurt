@@ -11,7 +11,6 @@
 
 	if($include_path) {
 		ini_set('include_path', ini_get('include_path').$include_path);
-		require_once 'class.shell.php';
 	}
 
 	function importDiff($table, $arr_new, $where = "") {
