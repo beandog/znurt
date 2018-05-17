@@ -59,6 +59,7 @@
 			return $this->manifest;
 		}
 
+		// FIXME this whole thing should be reviewed
 		private function parse() {
 
 			if(!$this->arr_files) {
@@ -82,7 +83,6 @@
 							'filesize' => $arr[2],
 							'rmd160' => $arr[4],
 							'sha1' => $arr[6],
-							'sha256' => $arr[8],
 						);
 					}
 
