@@ -66,7 +66,7 @@
 
 				$this->arr_files = $this->arr_entries = array();
 
-				$arr_types = array('AUX', 'DIST', 'EBUILD', 'MISC');
+				$arr_types = array('AUX', 'DIST', 'EBUILD');
 
 				foreach($arr_types as $key) {
 					$this->arr_entries[$key] = array();
@@ -179,12 +179,6 @@
 			return array_keys($this->arr_entries['EBUILD']);
 		}
 
-		public function getMisc() {
-
-			$this->parse();
-
-			return array_keys($this->arr_entries['MISC']);
-		}
-
 	}
+
 ?>
