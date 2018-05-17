@@ -86,8 +86,6 @@
 		// hash sums
 		private $hash;
 
-
-
 		function __construct($str) {
 
 			$tree = PortageTree::singleton();
@@ -263,13 +261,7 @@
 			if(!count($arr) || count($arr) == 1)
 				$this->$var = null;
 			else {
-
-				// Old code from another class, for reference
-// 				$atom = preg_replace('/^!?[><]?=?~?/', '', $atom);
-// 				$tmp = explode('/', $atom);
-
 				$str = current($arr);
-// 				$str = preg_replace("/[^a-z_-]/", "", $str);
 				$this->$var = $str;
 			}
 
@@ -301,24 +293,6 @@
 		}
 
 		function getPackageName() {
-
-// 			$var = 'pn';
-//
-// 			$str = $this->stripCategory();
-// 			$str = $this->stripSlot($str);
-//
-// 			// Will only return the package name
-//  			$pattern = '/\-\d+((\.?\d+)+)?([A-Za-z]+)?((_(alpha|beta|pre|rc|p)\d*)+)?(\-r\d+)?(\:.+)?$/';
-//  			$arr = preg_split($pattern, $str);
-//
-//  			// Check to see if it has a version or not (p.mask)
-//  			if(count($arr) == 1)
-//  				$this->has_version = false;
-//
-// 			$this->$var = $arr[0];
-//
-// 			return $this->$var;
-
 
 			return $this->pn;
 
