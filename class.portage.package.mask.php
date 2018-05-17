@@ -32,8 +32,6 @@
 
 			$arr = preg_grep("/(^(\s|#)|^$)/", $arr, PREG_GREP_INVERT);
 
-			sort($arr);
-
 			return $arr;
 
 		}
