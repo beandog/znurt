@@ -3,7 +3,6 @@
 	class PortageLicense {
 
 		private $name;
-		private $pdf;
 
 		function __construct($license = null) {
 
@@ -22,10 +21,8 @@
 
 				if(substr($str, -4, 4) == ".pdf") {
 					$this->name = basename($str, ".pdf");
-					$this->pdf = true;
 				} else {
 					$this->name = $str;
-					$this->pdf = false;
 				}
 
 			}
@@ -36,10 +33,6 @@
 			return $this->name;
 		}
 
-		public function isPDF() {
-			return $this->pdf;
-		}
-
-
 	}
+
 ?>
