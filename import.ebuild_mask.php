@@ -69,7 +69,6 @@
 
 		// All others
 		$sql = "SELECT pm.id AS pm_id, pm.package, pm.atom, pm.version AS pm_version, pm.gt, pm.lt, pm.eq, pl.level AS pm_level, e.version AS ebuild_version, el.level AS ebuild_level, e.id AS ebuild FROM package_mask pm INNER JOIN view_pmask_level pl ON pl.id = pm.id INNER JOIN ebuild e ON e.package = pm.package INNER JOIN view_ebuild_level el ON el.id = e.id WHERE e.status IN($e_status) AND pm.status = $pm_status AND (pm.gt = TRUE OR pm.lt = TRUE) ORDER BY pm.gt, pm.eq, pm.package;";
-	//  	shell::msg($sql);
 
 		$arr = $db->getAll($sql);
 
@@ -172,7 +171,7 @@
 						// I think the queries above for checking level actually grab this already.  Not sure.
 						} elseif($ebuild_level == $pm_level && $eq == 'f' && $pm_ext != $str) {
 
-							shell::msg("race condition! check import.ebuild_mask.php");
+							echo "race condition! check import.ebuild_mask.php\n";
 
 		// 					var_dump($ebuild_level);
 		// 					var_dump($pm_level);

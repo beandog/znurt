@@ -25,7 +25,6 @@
   	$dbmtime = new DBMtime($u->filename);
 
   	foreach($arr_use_flags[$type] as $cp => $arr_package_use_flags) {
-  		shell::msg($cp);
 
   		$sql = "SELECT package FROM view_package WHERE cp = ".$db->quote($cp);
   		$package = $db->getOne($sql);

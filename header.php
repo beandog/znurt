@@ -7,8 +7,6 @@
 	// See header.dsn.php for specific connection settings for your system
 	require_once 'header.mdb2.php';
 
-	require_once 'class.shell.php';
-
 	@include 'header.config.php';
 
 	if($include_path) {
