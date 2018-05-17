@@ -353,7 +353,8 @@
 			$var = 'slot';
 
 			if(strpos($this->atom, ':') > 0) {
-				$str = end(explode(':', $this->atom));
+				$arr = explode(':', $this->atom);
+				$str = end($arr);
 			}
 			else
 				$str = 0;
