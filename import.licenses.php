@@ -9,9 +9,9 @@
 	}
 
 	// Get and display Portage's licenses
-	$a_tree_licenses = $tree->getLicenses();
-	$i_tree_licenses = count($a_tree_licenses);
-	echo "* Larry:	$i_tree_licenses\n";
+	$a_larry_licenses = $tree->getLicenses();
+	$i_larry_licenses = count($a_larry_licenses);
+	echo "* Larry:	$i_larry_licenses\n";
 
 	// Get and display Znurt's licenses
 	$sql = "SELECT name FROM license ORDER BY name;";
@@ -20,7 +20,7 @@
 	echo "* Znurt:	$i_znurt_licenses\n";
 
 	// Get the difference between the two sets and display changes
-	$a_import_diff = importDiff('license', $a_tree_licenses);
+	$a_import_diff = importDiff('license', $a_larry_licenses);
 	$i_insert_count = count($a_import_diff['insert']);
 	echo "* Insert:	$i_insert_count\n";
 	$i_delete_count = count($a_import_diff['delete']);
@@ -47,7 +47,7 @@
 	}
 
 	// Cleanup large variables
-	unset($a_tree_licenses);
+	unset($a_larry_licenses);
 	unset($a_znurt_licenses);
 	unset($a_import_diff);
 
