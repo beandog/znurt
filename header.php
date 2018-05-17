@@ -16,8 +16,6 @@
 		require_once 'class.shell.php';
 	}
 
-	$now = $db->getOne("SELECT NOW();");
-
 	function importDiff($table, $arr_new, $where = "") {
 
  		$db = MDB2::singleton();

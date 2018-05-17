@@ -14,12 +14,7 @@
 	// file named header.dsn.php and set the variable $dsn
 	@include 'header.dsn.php';
 
-	$options = array(
-		'debug'       => 2,
-		'portability' => MDB2_PORTABILITY_ALL ^ MDB2_PORTABILITY_EMPTY_TO_NULL,
-	);
-
-	$db = MDB2::factory($dsn, $options);
+	$db = MDB2::factory($dsn, array('debug' => 2, 'portability' => MDB2_PORTABILITY_ALL ^ MDB2_PORTABILITY_EMPTY_TO_NULL));
 
 	if(PEAR::isError($db))
 		die($db->getMessage());
