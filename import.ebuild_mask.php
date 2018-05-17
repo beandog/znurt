@@ -92,8 +92,6 @@
 
 				}
 
-		// 		print_r($arr_pmask);
-
 				$arr_ebuilds[$pm_id][$ebuild] = array(
 					'version' => $ebuild_version,
 					'level' => $ebuild_level,
@@ -102,8 +100,6 @@
 				$arr_versions[$pm_id][$ebuild] = $ebuild_version;
 
 			}
-
-		// 	print_r($arr_versions);
 
 			foreach($arr_versions as $pm_id => $arr) {
 
@@ -115,14 +111,7 @@
 
 				$arr_extended[$pm_id] = $ext;
 
-		//  		print_r($arr);
-		// 		print_r($ext);
-
-		// 		die;
-
 			}
-
-		// 	print_r($arr_extended);
 
 			foreach($arr_pmask as $pm_id => $arr) {
 
@@ -173,19 +162,9 @@
 
 							echo "race condition! check import.ebuild_mask.php\n";
 
-		// 					var_dump($ebuild_level);
-		// 					var_dump($pm_level);
-
 							switch($ebuild_level) {
 
 								case "5":
-
-		// 							var_dump($arr_pmask[$pm_id]['atom']);
-		//
-		// 							var_dump($arr_extended[$pm_id][$key]);
-		// 							var_dump($str);
-		// 							echo "\n";
-
 									break;
 
 							}
