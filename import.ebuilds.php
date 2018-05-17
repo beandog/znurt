@@ -21,6 +21,8 @@
 	require_once 'class.portage.ebuild.php';
 	require_once 'class.db.ebuild.php';
 
+	// Get the arches
+	$a_larry_arches = $tree->getArches();
 
 	// Procedure to enter all data into ebuild table and return the resulting new primary key
 	$rs = pg_prepare('insert_ebuild', 'INSERT INTO ebuild (package, pf, pv, pr, pvr, alpha, beta, pre, rc, p, version, slot, hash, description, keywords, license, iuse) SELECT vp.package, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17 FROM view_package vp WHERE vp.cp = $1 RETURNING ebuild.id;');
@@ -30,6 +32,12 @@
 	}
 
 	$rs = pg_prepare('insert_homepage', 'INSERT INTO ebuild_homepage (ebuild, homepage) VALUES ($1, $2);');
+	if($rs === false) {
+		echo pg_last_error();
+		echo "\n";
+	}
+
+	$rs = pg_prepare('insert_ebuild_arch', 'INSERT INTO ebuild_arch (ebuild, status, arch) SELECT $1, $2, a.id FROM arch a WHERE a.name = $3;');
 	if($rs === false) {
 		echo pg_last_error();
 		echo "\n";
@@ -210,6 +218,20 @@
 
 		}
 
+		// Insert ebuild keywords
+		$a_keywords = arrKeywords($a_metadata['keywords'], $a_larry_arches);
+		foreach($a_keywords as $arch => $status) {
+
+			$rs = pg_execute('insert_ebuild_arch', array($id, $status, $arch));
+
+			if($rs === false) {
+				echo pg_last_error();
+				echo "\n";
+				continue;
+			}
+
+		}
+
 	}
 
 	if($i_update_count || $i_insert_count)
@@ -236,6 +258,51 @@
 		}
 
 		return $arr_homepages;
+	}
+
+	/**
+	 * Create an array of the arch keywords
+	 *
+	 * @param string keywords
+	 * @return array
+	 */
+	function arrKeywords($str, $arches) {
+
+		if(!$str)
+			return array();
+
+		$arr = explode(' ', $str);
+
+		if(!count($arr))
+			return array($str);
+
+		$arr_keywords = array();
+
+		// If it has -* at all, set them all to -arch by default
+		if(in_array('-*', $arr)) {
+			foreach($arches as $name) {
+				$arr_keywords[$name] = 2;
+			}
+		}
+
+		foreach($arr as $name) {
+			if($name[0] == '~' || $name[0] == '-')
+				$arch = substr($name, 1);
+			else
+				$arch = $name;
+
+			if($name[0] == '~') {
+				$arr_keywords[$arch] = 1;
+			} elseif($name[0] == '-') {
+				$arr_keywords[$arch] = 2;
+			} else {
+				$arr_keywords[$arch] = 0;
+			}
+		}
+
+		ksort($arr_keywords);
+
+		return $arr_keywords;
 	}
 
 	end_ebuilds:
