@@ -421,7 +421,7 @@
 				return $arr_components;
 			}
 
-			$str = $this->stripPackage($str);
+			$str = $this->stripPackage($this->atom);
 
 			$arr = explode("-", $str);
 
