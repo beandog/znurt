@@ -21,6 +21,12 @@
 	require_once 'class.portage.ebuild.php';
 	require_once 'class.db.ebuild.php';
 
+	$rs = pg_prepare('insert_ebuild', 'INSERT INTO ebuild (package, pf, pv, pr, pvr, alpha, beta, pre, rc, p, version, slot, hash, description, keywords, license, iuse) SELECT vp.package, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17 FROM view_package vp WHERE vp.cp = $1;');
+	if($rs === false) {
+		echo pg_last_error();
+		echo "\n";
+	}
+
 	// Verify that packages are imported
 	$sql = "SELECT COUNT(1) FROM package;";
 	$count = current(pg_fetch_row(pg_query($sql)));
@@ -148,7 +154,10 @@
 
 		$e = new PortageEbuild($atom);
 
-		$arr = array(
+		$a_metadata = $e->metadata();
+
+		$a_insert_ebuild = array(
+			'cp' => $cp,
 			'pf' => $pf, // ebuild class has some bugs which doesn't make this completely reliable, use filename's instead
 			'pv' => $e->pv,
 			'pr' => $e->pr,
@@ -161,38 +170,13 @@
 			'version' => $e->version,
 			'slot' => $e->slot,
 			'hash' => $a_larry_hashes[$cpf],
+			'description' => $a_metadata['description'],
+			'keywords' => $a_metadata['keywords'],
+			'license' => $a_metadata['license'],
+			'iuse' => $a_metadata['iuse'],
 		);
 
-		$q_pr = ($arr['pr'] == NULL ? 'NULL' : $arr['pr']);
-		$q_cp = pg_escape_literal($cp);
-
-		$sql = 'INSERT INTO ebuild (package, pf, pv, pr, pvr, alpha, beta, pre, rc, p, version, slot, hash) SELECT vp.package, '
-			. pg_escape_literal($arr['pf'])
-			. ', '
-			. pg_escape_literal($arr['pv'])
-			. ', '
-			. $q_pr
-			. ', '
-			. pg_escape_literal($arr['pvr'])
-			. ', '
-			. pg_escape_literal($arr['alpha'])
-			. ', '
-			. pg_escape_literal($arr['beta'])
-			. ', '
-			. pg_escape_literal($arr['pre'])
-			. ', '
-			. pg_escape_literal($arr['rc'])
-			. ', '
-			. pg_escape_literal($arr['p'])
-			. ', '
-			. pg_escape_literal($arr['version'])
-			. ', '
-			. pg_escape_literal($arr['slot'])
-			. ', '
-			. pg_escape_literal($arr['hash'])
-			. " FROM view_package vp WHERE vp.cp = $q_cp;";
-
-		$rs = pg_query($sql);
+		$rs = pg_execute('insert_ebuild', array_values($a_insert_ebuild));
 
 		if($rs === false) {
 			echo "$sql\n";
@@ -236,7 +220,7 @@
 
 	}
 
-	if($i_update_count)
+	if($i_update_count || $i_insert_count)
 		echo "\n";
 
 	end_ebuilds:
