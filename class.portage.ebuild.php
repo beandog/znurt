@@ -89,6 +89,7 @@
 			$this->category = $this->getCategory();
 			$this->pn = $this->getPackageName();
 			$this->pvr = $this->getPackageVersionAndRevision();
+			$this->slot = $this->getSlot();
 			/**/
 
 			$this->dir = $this->portage."/".$this->category."/".$this->pn;
@@ -149,7 +150,7 @@
 						break;
 
 					case 'slot':
-						return $this->getSlot();
+						return $this->slot;
 						break;
 
 					// Ebuild Variables
@@ -333,17 +334,14 @@
 
 		function getSlot() {
 
-			$var = 'slot';
+			$str = '';
 
 			if(strpos($this->atom, ':') > 0) {
-				$str = end(explode(':', $this->atom));
+				$arr = explode(':', $this->atom);
+				$str = end($arr);
 			}
-			else
-				$str = 0;
 
-			$this->$var = $str;
-
-			return $this->$var;
+			return $str;
 
 		}
 
@@ -534,10 +532,7 @@
 
 		function stripSlot($str) {
 
-			if(!is_null($this->getSlot())) {
-				$str = str_replace(":".$this->getSlot(), "", $str);
-			} else
-				$str =& $this->atom;
+			$str = preg_replace('/\:.*$/', '', $str);
 
 			return $str;
 
