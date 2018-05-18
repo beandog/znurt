@@ -90,6 +90,7 @@
 			$this->pn = $this->getPackageName();
 			$this->pvr = $this->getPackageVersionAndRevision();
 			$this->slot = $this->getSlot();
+			$this->p = $this->getPackageNameAndVersionMinusRevision();
 			/**/
 
 			$this->dir = $this->portage."/".$this->category."/".$this->pn;
@@ -155,7 +156,7 @@
 
 					// Ebuild Variables
 					case 'p':
-						return $this->getPackageNameAndVersionMinusRevision();
+						return $this->p;
 						break;
 
 					case 'pn':
@@ -273,7 +274,10 @@
 
 			$arr = $this->getElements();
 
-			return $this->p = $thi->pn."-".$arr['pv'];
+			$p = $this->pn."-".$arr['pv'];
+
+			return $p;
+
 		}
 
 		function getPackageVersionMinusRevision() {
