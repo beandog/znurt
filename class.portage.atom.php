@@ -49,7 +49,6 @@
 
 			$this->ebuild_atom = $str;
 
-
 			parent::__construct($this->ebuild_atom);
 
 		}
