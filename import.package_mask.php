@@ -29,58 +29,74 @@
 
 	$pmask = new PackageMask();
 
-	$dbmtime = new DBMtime($pmask->filename);
+	$rs = pg_prepare('insert_package_mask', 'INSERT INTO package_mask (package, atom, lt, gt, eq, ar, av, pf, pv, pr, pvr, alpha, beta, pre, rc, p, version) SELECT p.id, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16 FROM category c INNER JOIN package p ON p.category = c.id WHERE c.name = $17 AND p.name = $18;');
 
-	$import = false;
-
-	$sql = "SELECT COUNT(1) FROM package_mask WHERE status = 0;";
-	$count = current(pg_fetch_row(pg_query($sql)));
-
-	if(is_null($dbmtime->mtime) || ($pmask->mtime > $dbmtime->mtime) || !$count) {
-		$dbmtime->mtime = $pmask->mtime;
-		$import = true;
+	if($rs === false) {
+		echo pg_last_error();
+		echo "\n";
+		exit;
 	}
 
-	if($import) {
+	// Reset table
+	$sql = "DELETE FROM package_mask;";
+	pg_query($sql);
 
-		// Delete any previous import attempts
-		$sql = "DELETE FROM package_mask WHERE status = 1;";
+	$a_larry_pmask = $pmask->getMaskedPackages();
 
-		$arr = $pmask->getMaskedPackages();
+	// The package.mask file is appended to by the top, so reverse the order
+	// of the filename contents so oldest masked gets inserted first.
+	$a_larry_pmask = array_reverse($a_larry_pmask);
 
-		$arr_pg_bool = array('false', 'true');
+	$arr_pg_bool = array('false', 'true');
 
-		function null2str($var) {
+	foreach($a_larry_pmask as $atom) {
 
-			$db = MDB2::singleton();
+		echo "* $atom\n";
 
-			if(is_null($var))
-				return 'NULL';
-			else
-				return $db->quote($var);
+		$a = new PortageAtom($atom);
+
+		$pvr = $a->pvr;
+
+		if(!$a->pvr)
+			$a->pvr = '';
+
+		if(is_null($a->version))
+			$a->version = '';
+
+		if(is_null($a->pf))
+			$a->pf = '';
+
+		if(is_null($a->pv))
+			$a->pv = '';
+
+		$arr = array(
+			'atom' => $atom,
+			'lt' => $arr_pg_bool[$a->lt],
+			'gt' => $arr_pg_bool[$a->gt],
+			'eq' => $arr_pg_bool[$a->eq],
+			'ar' => $arr_pg_bool[$a->ar],
+			'av' => $arr_pg_bool[$a->av],
+			'pf' => $a->pf,
+			'pv' => $a->pv,
+			'pr' => $a->pr,
+			'pvr' => $a->pvr,
+			'alpha' => $a->alpha,
+			'beta' => $a->beta,
+			'pre' => $a->pre,
+			'rc' => $a->rc,
+			'p' => $a->p,
+			'version' => $a->version,
+			'category' => $a->category,
+			'name' => $a->pn,
+		);
+
+		$rs = pg_execute('insert_package_mask', array_values($arr));
+
+		if($rs === false) {
+			echo pg_last_error();
+			echo "\n";
+			continue;
 		}
-
-		foreach($arr as $str) {
-
-			echo "\033[K";
-			echo "* $str\r";
-
-			$a = new PortageAtom($str);
-
-			$pvr = $a->pvr;
-
-			if(!$pvr)
-				$pvr = '';
-
-			// FIXME? The # of inserts on an empty db is very low (less than 1k) so I'm not
-			// going to write a prepare statement right now.
-
-			$sql = "INSERT INTO package_mask (package, atom, lt, gt, eq, ar, av, pf, pv, pr, pvr, alpha, beta, pre, rc, p, version, status) SELECT p.id, ".$db->quote($str).", ".$arr_pg_bool[intval($a->lt)].",  ".$arr_pg_bool[intval($a->gt)].",  ".$arr_pg_bool[intval($a->eq)].",  ".$arr_pg_bool[intval($a->ar)].",  ".$arr_pg_bool[intval($a->av)].", ".null2str($a->pf).", ".null2str($a->pv).", ".null2str($a->pr).", ".null2str($a->pvr).", ".null2str($a->_alpha).", ".null2str($a->_beta).", ".null2str($a->_pre).", ".null2str($a->_rc).", ".null2str($a->_p).", ".null2str($a->version).", 1  FROM category c INNER JOIN package p ON p.category = c.id WHERE c.name = ".$db->quote($a->category)." AND p.name = ".$db->quote($a->pn).";";
-			pg_query($sql);
-
-		}
-
-		echo "\n";
 
 	}
 
