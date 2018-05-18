@@ -85,9 +85,13 @@
 
 			$this->has_version = $this->hasVersion();
 
+			/** Cleaning up **/
 			$this->category = $this->getCategory();
+			$this->pn = $this->getPackageName();
+			/**/
 
-			$this->dir = $this->portage."/".$this->category."/".$this->getPackageName();
+
+			$this->dir = $this->portage."/".$this->category."/".$this->pn;
 			$this->manifest_filename = $this->dir."/Manifest";
 
 			$this->basename = $this->getFullPackageName().".ebuild";
@@ -155,7 +159,7 @@
 
 					case 'pn':
 					case 'package':
-						return $this->getPackageName();
+						return $this->pn;
 						break;
 
 					case 'pf':
@@ -258,7 +262,7 @@
 			$var = 'pf';
 
 			if($this->has_version)
-				return $this->$var = $this->getPackageName()."-".$this->getPackageVersionAndRevision();
+				return $this->$var = $this->pn."-".$this->getPackageVersionAndRevision();
 			else
 				return "";
 
@@ -276,17 +280,11 @@
 			return $arr[1];
 		}
 
-		function getPackageName() {
-
-			return $this->pn;
-
-		}
-
 		function getPackageNameAndVersionMinusRevision() {
 
 			$arr = $this->getElements();
 
-			return $this->p = $this->getPackageName."-".$arr['pv'];
+			return $this->p = $thi->pn."-".$arr['pv'];
 		}
 
 		function getPackageVersionMinusRevision() {
@@ -465,6 +463,25 @@
 
 		}
 
+		// Duplicate code during cleanup
+		function getPackageName() {
+
+			$str = $this->stripCategory();
+			$str = $this->stripSlot($str);
+
+			// This pattern makes ONE grand assumption:
+			// That a version that has both digits and letters (see ([A-Za-z])? ) that there is
+			// ONLY one letter (fex: openssl-0.9a).  This lets us catch the pn properly of
+			// atoms like font-adobe-100dpi, where it would normally think 100dpi = version.
+			$pattern = '/\-\d+((\.?\d+)+)?([A-Za-z])?((_(alpha|beta|pre|rc|p)\d*)+)?(\-r\d+)?(\:.+)?([.+])?$/';
+			$arr = preg_split($pattern, $str);
+
+			$pn = current($arr);
+
+			return $pn;
+
+		}
+
 		function hasVersion() {
 
 			$str = $this->stripCategory();
@@ -510,7 +527,7 @@
 
 			$str = $this->stripCategory();
 			$str = $this->stripSlot($str);
-			$str = str_replace($this->getPackageName()."-", "", $str);
+			$str = str_replace($this->pn."-", "", $str);
 			return $str;
 
 		}
