@@ -88,8 +88,8 @@
 			/** Cleaning up **/
 			$this->category = $this->getCategory();
 			$this->pn = $this->getPackageName();
+			$this->pvr = $this->getPackageVersionAndRevision();
 			/**/
-
 
 			$this->dir = $this->portage."/".$this->category."/".$this->pn;
 			$this->manifest_filename = $this->dir."/Manifest";
@@ -171,7 +171,7 @@
 						break;
 
 					case 'pvr':
-						return $this->getPackageVersionAndRevision();
+						return $this->pvr;
 						break;
 
 					case 'portage_mtime':
@@ -262,7 +262,7 @@
 			$var = 'pf';
 
 			if($this->has_version)
-				return $this->$var = $this->pn."-".$this->getPackageVersionAndRevision();
+				return $this->$var = $this->pn."-".$this->pvr;
 			else
 				return "";
 
@@ -317,10 +317,8 @@
 
 		function getPackageVersionAndRevision() {
 
-			$var = 'pvr';
-
 			if(!$this->has_version)
-				return $this->$var = "";
+				return '';
 
  			$arr = $this->getElements();
 
@@ -328,7 +326,9 @@
 
 			if($arr['pr'])
 				$str .= "-r".$arr['pr'];
- 			return $this->$var = $str;
+
+			return $str;
+
 		}
 
 		function getSlot() {
@@ -433,7 +433,7 @@
 					elseif($str[0] == "p" && !(substr($str, 0, 3) == "pre"))
 						$arr_elements['p'] = $this->_p = trim(substr($str, 1));
 					elseif($str[0] == "r" && !(substr($str, 0, 2) == "rc"))
-						$arr_elements['r'] = $this->pr = trim(substr($str, 1));
+						$arr_elements['pr'] = $this->pr = trim(substr($str, 1));
 
 				}
 			}
