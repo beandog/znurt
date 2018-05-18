@@ -60,7 +60,7 @@
 		private $arr_metadata;
 		private $arr_metadata_keys;
 		private $arr_versions;
-		public $arr_components;
+		public $arr_elements;
 		private $has_version;
 
 		// File mtimes
@@ -98,7 +98,7 @@
 
 			$this->arr_metadata_keys = array('depend', 'rdepend', 'slot', 'src_uri', 'restrict', 'homepage', 'license', 'description', 'keywords', 'inherited', 'iuse', 'cdepend', 'pdepend', 'provide', 'eapi', 'properties', 'defined_phases');
 
-			$this->arr_components = array();
+			$this->arr_elements = array();
 
 		}
 
@@ -272,36 +272,18 @@
 		}
 
 		function getMajorVersion() {
-			$this->getComponents();
+			$this->getElements();
 			$arr = explode(".", $this->version);
 			return $arr[0];
 		}
 
 		function getMinorVersion() {
-			$this->getComponents();
+			$this->getElements();
 			$arr = explode(".", $this->version);
 			return $arr[1];
 		}
 
 		function getPackageName() {
-
-// 			$var = 'pn';
-//
-// 			$str = $this->stripCategory();
-// 			$str = $this->stripSlot($str);
-//
-// 			// Will only return the package name
-//  			$pattern = '/\-\d+((\.?\d+)+)?([A-Za-z]+)?((_(alpha|beta|pre|rc|p)\d*)+)?(\-r\d+)?(\:.+)?$/';
-//  			$arr = preg_split($pattern, $str);
-//
-//  			// Check to see if it has a version or not (p.mask)
-//  			if(count($arr) == 1)
-//  				$this->has_version = false;
-//
-// 			$this->$var = $arr[0];
-//
-// 			return $this->$var;
-
 
 			return $this->pn;
 
@@ -309,7 +291,7 @@
 
 		function getPackageNameAndVersionMinusRevision() {
 
-			$arr = $this->getComponents();
+			$arr = $this->getElements();
 
 			return $this->p = $this->getPackageName."-".$arr['pv'];
 		}
@@ -321,7 +303,7 @@
 			if(!$this->has_version)
 				return $this->$var = "";
 
-			$arr = $this->getComponents();
+			$arr = $this->getElements();
 
  			$str = $arr['version'];
 
@@ -349,7 +331,7 @@
 			if(!$this->has_version)
 				return $this->$var = "";
 
- 			$arr = $this->getComponents();
+ 			$arr = $this->getElements();
 
  			$str = $this->getPackageVersionMinusRevision();
 
@@ -380,7 +362,7 @@
 			if(!in_array($var, array('_alpha', '_beta', '_pre', '_rc', '_p', 'pr', 'version')))
 				return null;
 
-			$arr = $this->getComponents();
+			$arr = $this->getElements();
 			if($var[0] == "_")
 				$str = str_replace("_", "", $var);
 			return $this->$var = $arr[$str];
@@ -390,13 +372,13 @@
 		/**
 		 * Simplified way to get specific version information
 		 */
-		function getComponents() {
+		function getElements() {
 
-			if(count($this->arr_components)) {
-				return $this->arr_components;
+			if(count($this->arr_elements)) {
+				return $this->arr_elements;
 			}
 
-			$arr_components = array(
+			$arr_elements = array(
 				'pf' => '',
 				'pv' => '',
 				'pr' => null,
@@ -410,7 +392,7 @@
 			);
 
 			if(!$this->has_version) {
-				return $arr_components;
+				return $arr_elements;
 			}
 
 			$str = $this->stripPackage($this->atom);
@@ -420,18 +402,18 @@
 			// We might be done at this point, depending on
 			// the details of the atom passed in.
 			if(!count($arr))
-				return $this->arr_components = $arr_components;
+				return $this->arr_elements = $arr_elements;
 
- 			$arr_components['pv'] = array_shift($arr);
+ 			$arr_elements['pv'] = array_shift($arr);
 
 			// Have the exploded one first so the version is the first value
- 			$arr = array_merge(explode("_", $arr_components['pv']), $arr);
+ 			$arr = array_merge(explode("_", $arr_elements['pv']), $arr);
 
 			// This format of the version isn't used in portage anywhere,
 			// but it could be useful for package.masks or something
 			// similar.  It's basically the version without any of the
 			// suffices.  (vim-6.3_beta3 => 6.3)
-			$arr_components['version'] = $this->version = array_shift($arr);
+			$arr_elements['version'] = $this->version = array_shift($arr);
 
 			// See if we have more
 			if(count($arr)) {
@@ -446,26 +428,26 @@
 					// (integer).
 
 					if(substr($str, 0, 5) == "alpha")
-						$arr_components['alpha'] = $this->_alpha = trim(substr($str, 5));
+						$arr_elements['alpha'] = $this->_alpha = trim(substr($str, 5));
 					elseif(substr($str, 0, 4) == "beta")
-						$arr_components['beta'] = $this->_beta = trim(substr($str, 4));
+						$arr_elements['beta'] = $this->_beta = trim(substr($str, 4));
 					elseif(substr($str, 0, 3) == "pre")
-						$arr_components['pre'] = $this->_pre = trim(substr($str, 3));
+						$arr_elements['pre'] = $this->_pre = trim(substr($str, 3));
 					elseif(substr($str, 0, 2) == "rc")
-						$arr_components['rc'] = $this->_rc = trim(substr($str, 2));
+						$arr_elements['rc'] = $this->_rc = trim(substr($str, 2));
 					// Shouldn't need the extra checks for pre/rc since the
 					// whole thing is going to look at each string once, and
 					// in order .. but weirder things have happened.  More
 					// checks never hurt.
 					elseif($str[0] == "p" && !(substr($str, 0, 3) == "pre"))
-						$arr_components['p'] = $this->_p = trim(substr($str, 1));
+						$arr_elements['p'] = $this->_p = trim(substr($str, 1));
 					elseif($str[0] == "r" && !(substr($str, 0, 2) == "rc"))
-						$arr_components['r'] = $this->pr = trim(substr($str, 1));
+						$arr_elements['r'] = $this->pr = trim(substr($str, 1));
 
 				}
 			}
 
-			return $this->arr_components = $arr_components;
+			return $this->arr_elements = $arr_elements;
 
 		}
 
