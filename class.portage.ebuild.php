@@ -207,20 +207,20 @@
 			if(!is_null($this->arr_metadata))
 				return $this->arr_metadata;
 
+			foreach($this->arr_metadata_keys as $metadata_key)
+				$arr_metadata[$metadata_key] = '';
+
 			if(!file_exists($this->filename) || !file_exists($this->filename_cache))
-				return array();
+				return null;
 
 			$file = file($this->filename_cache, FILE_IGNORE_NEW_LINES);
 
 			// Kill off the empty lines
 			$arr = array_slice($file, 0, 17, true);
 
-			$arr_metadata = array();
+			foreach($this->arr_metadata_keys as $metadata_key) {
 
-			foreach($this->arr_metadata_keys as $key => $value) {
-				if(!($value == 'eclasses' || $value == 'md5'))
-					$value = strtoupper($value);
-				$pattern = "/^_?".$value."_?=/i";
+				$pattern = "/^_?${metadata_key}?=/i";
 				$arr_grep = preg_grep($pattern, $arr);
 				if(count($arr_grep)) {
 					$str = current($arr_grep);
@@ -228,19 +228,11 @@
 					$arr_slice = array_slice(explode('=', $str), 1);
 					$str = implode('=', $arr_slice);
 
-					$arr_metadata[$key] = $str;
-				} else {
-					$arr_metadata[$key] = '';
+					$arr_metadata[$metadata_key] = $str;
 				}
 			}
 
-			if(count($this->arr_metadata_keys) == count($arr_metadata))
-				$arr = array_combine($this->arr_metadata_keys, $arr_metadata);
-			// FIXME log an error if no metadata
-			else
-				$arr = array();
-
-			return $arr;
+			return $arr_metadata;
 
 		}
 
