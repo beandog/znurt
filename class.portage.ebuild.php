@@ -85,18 +85,21 @@
 
 			$this->has_version = $this->hasVersion();
 
-			$this->dir = $this->portage."/".$this->getCategory()."/".$this->getPackageName();
+			$this->category = $this->getCategory();
+
+			$this->dir = $this->portage."/".$this->category."/".$this->getPackageName();
 			$this->manifest_filename = $this->dir."/Manifest";
 
 			$this->basename = $this->getFullPackageName().".ebuild";
 			$this->filename = $this->dir."/".$this->basename;
 
-			$this->filename_cache = $this->cache."/".$this->getCategory()."/".$this->getFullPackageName();
+			$this->filename_cache = $this->cache."/".$this->category."/".$this->getFullPackageName();
 
 			if(file_exists($this->filename_cache))
 				$this->cache_mtime = filemtime($this->filename_cache);
 
 			$this->arr_metadata_keys = array('depend', 'rdepend', 'slot', 'src_uri', 'restrict', 'homepage', 'license', 'description', 'keywords', 'inherited', 'iuse', 'cdepend', 'pdepend', 'provide', 'eapi', 'properties', 'defined_phases');
+
 
 			$this->arr_elements = array();
 
@@ -138,7 +141,7 @@
 
 					// Other
 					case 'category':
-						return $this->getCategory();
+						return $this->category;
 						break;
 
 					case 'slot':
@@ -239,24 +242,14 @@
 
 		function getCategory() {
 
-			$var = 'category';
-
 			$arr = explode("/", $this->atom);
 
 			if(!count($arr) || count($arr) == 1)
-				$this->$var = null;
-			else {
+				return '';
 
-				// Old code from another class, for reference
-// 				$atom = preg_replace('/^!?[><]?=?~?/', '', $atom);
-// 				$tmp = explode('/', $atom);
+			$str = current($arr);
 
-				$str = current($arr);
-// 				$str = preg_replace("/[^a-z_-]/", "", $str);
-				$this->$var = $str;
-			}
-
-			return $this->$var;
+			return $str;
 
 		}
 
