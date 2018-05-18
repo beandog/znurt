@@ -269,18 +269,6 @@
 
 		}
 
-		function getMajorVersion() {
-			$this->getElements();
-			$arr = explode(".", $this->version);
-			return $arr[0];
-		}
-
-		function getMinorVersion() {
-			$this->getElements();
-			$arr = explode(".", $this->version);
-			return $arr[1];
-		}
-
 		function getPackageNameAndVersionMinusRevision() {
 
 			$arr = $this->getElements();
