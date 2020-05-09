@@ -11,13 +11,13 @@
 	// Get and display Portage's licenses
 	$a_larry_licenses = $tree->getLicenses();
 	$i_larry_licenses = count($a_larry_licenses);
-	echo "* Larry:	$i_larry_licenses\n";
+	echo "* Upstream:	$i_larry_licenses\n";
 
 	// Get and display Znurt's licenses
 	$sql = "SELECT name FROM license ORDER BY name;";
 	$a_znurt_licenses = pg_column_array(pg_fetch_all(pg_query($sql)));
 	$i_znurt_licenses = count($a_znurt_licenses);
-	echo "* Znurt:	$i_znurt_licenses\n";
+	echo "* Local:	$i_znurt_licenses\n";
 
 	// Get the difference between the two sets and display changes
 	$a_import_diff = importDiff('license', $a_larry_licenses);
@@ -35,7 +35,7 @@
 	// Delete removed licenses
 	foreach($a_import_diff['delete'] as $str) {
 		$q_str = pg_escape_literal($str);
-		$sql = "DELETE FROM license WHERE name = $q_str;";
+		$sql = "UPDATE license SET active = 'f' WHERE name = $q_str;";
 		pg_query($sql);
 	}
 
