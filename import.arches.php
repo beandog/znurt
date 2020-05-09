@@ -11,13 +11,14 @@
 	// Get and display Portage's arches
 	$a_tree_arches = $tree->getArches();
 	$i_tree_arches = count($a_tree_arches);
-	echo "* Larry:	$i_tree_arches\n";
+	echo "* Upstream:	$i_tree_arches\n";
 
 	// Display Znurt's arches
 	$sql = "SELECT name FROM arch ORDER BY name;";
 	$a_znurt_arches = pg_column_array(pg_fetch_all(pg_query($sql)));
+	print_r($a_znurt_arches);
 	$i_znurt_arches = count($a_znurt_arches);
-	echo "* Znurt:	$i_znurt_arches\n";
+	echo "* Local:	$i_znurt_arches\n";
 
 	// Get the difference between the two sets and display changes
 	$a_import_diff = importDiff('arch', $a_tree_arches);
@@ -43,7 +44,7 @@
 	// Delete removed arches
 	foreach($a_import_diff['delete'] as $arch) {
 		$q_arch = pg_escape_literal($arch);
-		$sql = "DELETE FROM arch WHERE name = $q_arch;";
+		$sql = "UPDATE arches SET active = 'f' WHERE name = $q_arch;";
 		pg_query($sql);
 	}
 
