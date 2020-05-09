@@ -13,13 +13,13 @@
 	// Get and display Portage's categories
 	$a_tree_categories = $tree->getCategories();
 	$i_tree_categories = count($a_tree_categories);
-	echo "* Larry:	$i_tree_categories\n";
+	echo "* Upstream:	$i_tree_categories\n";
 
 	// Get and display Znurt's categories
 	$sql = "SELECT name FROM category ORDER BY name;";
 	$a_znurt_categories = pg_column_array(pg_fetch_all(pg_query($sql)));
 	$i_znurt_categories = count($a_znurt_categories);
-	echo "* Znurt:	$i_znurt_categories\n";
+	echo "* Local:	$i_znurt_categories\n";
 
 	// Get the difference between the two sets and display changes
 	$a_import_diff = importDiff('category', $a_tree_categories);
