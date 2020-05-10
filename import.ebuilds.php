@@ -76,6 +76,9 @@
 	$a_larry_hashes = array();
 	$a_larry_ebuilds = array();
 
+	if($debug)
+		$file_contents = array_slice($file_contents, 0, 10);
+
 	foreach($file_contents as $filename) {
 
 		$arr = explode('/', $filename);
@@ -100,12 +103,12 @@
 
 	$i_larry_ebuilds = count($a_larry_hashes);
 
-	echo "* Larry:	$i_larry_ebuilds\n";
+	echo "* Upstream:	$i_larry_ebuilds\n";
 
 	// Display ebuild count in database
 	$sql = "SELECT COUNT(1) FROM ebuild;";
 	$i_znurt_ebuilds = current(pg_fetch_row(pg_query($sql)));
-	echo "* Znurt:	$i_znurt_ebuilds\n";
+	echo "* Local:	$i_znurt_ebuilds\n";
 
 	// If no ebuilds, reset the sequence
 	if(!$i_znurt_ebuilds) {
