@@ -46,7 +46,7 @@
 	// Get the package Manifest files
 	$retval = -1;
 	$a_package_manifest_hashes = array();
-	$find_out_filename = tmpfile();
+	$find_out_filename = tempnam('/tmp', 'znurt_import_packages_');
 	$str = "find $portage_tree -mindepth 3 -maxdepth 3 -type f -name Manifest > $find_out_filename";
 	echo "* Exec:		$str\n";
 	passthru($str, $retval);
