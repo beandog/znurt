@@ -46,7 +46,7 @@
 	// Get the package Manifest files
 	$retval = -1;
 	$a_package_manifest_hashes = array();
-	$find_out_filename = "/tmp/znurt.find.out";
+	$find_out_filename = tmpfile();
 	$str = "find $portage_tree -mindepth 3 -maxdepth 3 -type f -name Manifest > $find_out_filename";
 	echo "* Exec:		$str\n";
 	passthru($str, $retval);
@@ -80,12 +80,12 @@
 
 	// Display package count in portage
 	$i_larry_packages = count($a_larry_cps);
-	echo "* Larry:	$i_larry_packages\n";
+	echo "* Upstream:	$i_larry_packages\n";
 
 	// Display package count in database
 	$sql = "SELECT COUNT(1) FROM package;";
 	$i_znurt_packages = current(pg_fetch_row(pg_query($sql)));
-	echo "* Znurt:	$i_znurt_packages\n";
+	echo "* Local:	$i_znurt_packages\n";
 
 	// Get the existing category => package names from the database
 	$sql = "SELECT category_name, package_name FROM view_package;";
