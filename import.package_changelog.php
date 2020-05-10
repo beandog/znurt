@@ -38,7 +38,7 @@
 
 		exec($cmd, $output, $retval);
 
-		if($retval == 0 && $changelog) {
+		if($retval == 0) {
 
 			$changelog = implode("\n", $output);
 
