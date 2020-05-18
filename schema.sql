@@ -2,13 +2,19 @@
 -- PostgreSQL database dump
 --
 
+-- Dumped from database version 9.3.17
+-- Dumped by pg_dump version 9.6.14
+
 SET statement_timeout = 0;
 SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
 SET check_function_bodies = false;
+SET xmloption = content;
 SET client_min_messages = warning;
+SET row_security = off;
 
 --
 -- Name: znurt; Type: DATABASE; Schema: -; Owner: -
@@ -21,11 +27,14 @@ CREATE DATABASE znurt WITH TEMPLATE = template0 ENCODING = 'UTF8' LC_COLLATE = '
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
 SET check_function_bodies = false;
+SET xmloption = content;
 SET client_min_messages = warning;
+SET row_security = off;
 
 --
 -- Name: plpgsql; Type: EXTENSION; Schema: -; Owner: -
@@ -176,15 +185,15 @@ SET default_tablespace = '';
 SET default_with_oids = true;
 
 --
--- Name: arch; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+-- Name: arch; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.arch (
     id integer NOT NULL,
     name character varying(255) DEFAULT ''::character varying NOT NULL,
     idate timestamp with time zone DEFAULT now() NOT NULL,
-    active boolean DEFAULT false NOT NULL,
-    prefix boolean DEFAULT false NOT NULL
+    prefix boolean DEFAULT false NOT NULL,
+    active boolean DEFAULT true NOT NULL
 );
 
 
@@ -193,7 +202,7 @@ CREATE TABLE public.arch (
 --
 
 CREATE SEQUENCE public.arch_id_seq
-    START WITH 1
+    START WITH 43
     INCREMENT BY 1
     NO MINVALUE
     NO MAXVALUE
@@ -208,7 +217,7 @@ ALTER SEQUENCE public.arch_id_seq OWNED BY public.arch.id;
 
 
 --
--- Name: category; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+-- Name: category; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.category (
@@ -222,7 +231,7 @@ CREATE TABLE public.category (
 SET default_with_oids = false;
 
 --
--- Name: category_description; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+-- Name: category_description; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.category_description (
@@ -252,7 +261,7 @@ ALTER SEQUENCE public.category_id_seq OWNED BY public.category.id;
 
 
 --
--- Name: ebuild; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+-- Name: ebuild; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.ebuild (
@@ -278,7 +287,11 @@ CREATE TABLE public.ebuild (
     cache_mtime bigint,
     source text DEFAULT ''::text NOT NULL,
     filesize integer DEFAULT 0 NOT NULL,
-    hash character(40) DEFAULT ''::bpchar NOT NULL
+    hash character(40) DEFAULT ''::bpchar NOT NULL,
+    description text DEFAULT ''::text NOT NULL,
+    keywords text DEFAULT ''::text NOT NULL,
+    license text DEFAULT ''::text NOT NULL,
+    iuse text DEFAULT ''::text NOT NULL
 );
 
 
@@ -292,7 +305,7 @@ COMMENT ON COLUMN public.ebuild.status IS 'complete, new or updated, remove';
 SET default_with_oids = true;
 
 --
--- Name: ebuild_arch; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+-- Name: ebuild_arch; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.ebuild_arch (
@@ -313,7 +326,7 @@ COMMENT ON COLUMN public.ebuild_arch.status IS 'stable, unstable, no workie';
 SET default_with_oids = false;
 
 --
--- Name: ebuild_depend; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+-- Name: ebuild_depend; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.ebuild_depend (
@@ -326,7 +339,7 @@ CREATE TABLE public.ebuild_depend (
 SET default_with_oids = true;
 
 --
--- Name: ebuild_eclass; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+-- Name: ebuild_eclass; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.ebuild_eclass (
@@ -337,7 +350,7 @@ CREATE TABLE public.ebuild_eclass (
 
 
 --
--- Name: ebuild_homepage; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+-- Name: ebuild_homepage; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.ebuild_homepage (
@@ -367,7 +380,7 @@ ALTER SEQUENCE public.ebuild_id_seq OWNED BY public.ebuild.id;
 
 
 --
--- Name: ebuild_license; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+-- Name: ebuild_license; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.ebuild_license (
@@ -380,7 +393,7 @@ CREATE TABLE public.ebuild_license (
 SET default_with_oids = false;
 
 --
--- Name: ebuild_mask; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+-- Name: ebuild_mask; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.ebuild_mask (
@@ -391,7 +404,7 @@ CREATE TABLE public.ebuild_mask (
 
 
 --
--- Name: ebuild_metadata; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+-- Name: ebuild_metadata; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.ebuild_metadata (
@@ -405,7 +418,7 @@ CREATE TABLE public.ebuild_metadata (
 SET default_with_oids = true;
 
 --
--- Name: ebuild_use; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+-- Name: ebuild_use; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.ebuild_use (
@@ -418,7 +431,7 @@ CREATE TABLE public.ebuild_use (
 SET default_with_oids = false;
 
 --
--- Name: ebuild_version; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+-- Name: ebuild_version; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.ebuild_version (
@@ -431,7 +444,7 @@ CREATE TABLE public.ebuild_version (
 SET default_with_oids = true;
 
 --
--- Name: package; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+-- Name: package; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.package (
@@ -489,7 +502,7 @@ CREATE VIEW public.ebuilds AS
 
 
 --
--- Name: eclass; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+-- Name: eclass; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.eclass (
@@ -521,7 +534,7 @@ ALTER SEQUENCE public.eclass_id_seq OWNED BY public.eclass.id;
 SET default_with_oids = false;
 
 --
--- Name: import_status; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+-- Name: import_status; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.import_status (
@@ -554,7 +567,7 @@ ALTER SEQUENCE public.import_status_id_seq OWNED BY public.import_status.id;
 SET default_with_oids = true;
 
 --
--- Name: license; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+-- Name: license; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.license (
@@ -586,7 +599,7 @@ ALTER SEQUENCE public.license_id_seq OWNED BY public.license.id;
 SET default_with_oids = false;
 
 --
--- Name: meta; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+-- Name: meta; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.meta (
@@ -717,7 +730,7 @@ CREATE VIEW public.missing_use AS
 
 
 --
--- Name: mtime; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+-- Name: mtime; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.mtime (
@@ -744,21 +757,19 @@ CREATE VIEW public.new_packages AS
 
 
 --
--- Name: package_changelog; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+-- Name: package_changelog; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.package_changelog (
     package integer NOT NULL,
     changelog text DEFAULT ''::text NOT NULL,
-    mtime bigint NOT NULL,
-    hash character(40) DEFAULT ''::bpchar NOT NULL,
-    filesize integer NOT NULL,
+    commit_date date,
     recent_changes text DEFAULT ''::text NOT NULL
 );
 
 
 --
--- Name: package_files; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+-- Name: package_files; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.package_files (
@@ -812,7 +823,7 @@ ALTER SEQUENCE public.package_id_seq OWNED BY public.package.id;
 SET default_with_oids = true;
 
 --
--- Name: package_maintainer; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+-- Name: package_maintainer; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.package_maintainer (
@@ -826,7 +837,7 @@ CREATE TABLE public.package_maintainer (
 SET default_with_oids = false;
 
 --
--- Name: package_manifest; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+-- Name: package_manifest; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.package_manifest (
@@ -851,7 +862,7 @@ CREATE SEQUENCE public.package_mask_id_seq
 
 
 --
--- Name: package_mask; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+-- Name: package_mask; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.package_mask (
@@ -878,7 +889,7 @@ CREATE TABLE public.package_mask (
 
 
 --
--- Name: package_recent; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+-- Name: package_recent; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.package_recent (
@@ -889,7 +900,7 @@ CREATE TABLE public.package_recent (
 
 
 --
--- Name: package_recent_arch; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+-- Name: package_recent_arch; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.package_recent_arch (
@@ -901,7 +912,7 @@ CREATE TABLE public.package_recent_arch (
 
 
 --
--- Name: package_use; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+-- Name: package_use; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.package_use (
@@ -962,7 +973,7 @@ CREATE VIEW public.search_ebuilds AS
 SET default_with_oids = true;
 
 --
--- Name: use; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+-- Name: use; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.use (
@@ -1032,42 +1043,8 @@ CREATE VIEW public.view_ebuild AS
     e.cache_mtime,
     e.portage_mtime,
     e.idate,
-    (em.ebuild IS NOT NULL) AS masked
-   FROM (((public.ebuild e
-     JOIN public.package p ON ((e.package = p.id)))
-     JOIN public.category c ON ((c.id = p.category)))
-     LEFT JOIN public.ebuild_mask em ON ((e.id = em.ebuild)));
-
-
---
--- Name: view_ebuild_cpe; Type: VIEW; Schema: public; Owner: -
---
-
-CREATE VIEW public.view_ebuild_cpe AS
- SELECT e.id,
-    c.name AS category_name,
-    c.id AS category,
-    p.name AS package_name,
-    (((c.name)::text || '/'::text) || (p.name)::text) AS cp,
-    ((((c.name)::text || '/'::text) || (p.name)::text) || ('/'::text || (e.pf)::text)) AS cpe,
-    e.package,
-    e.pf,
-    e.pv,
-    e.pr,
-    e.pvr,
-    e.alpha,
-    e.beta,
-    e.pre,
-    e.rc,
-    e.p,
-    e.slot,
-    e.version,
-    e.ev,
-    e.lvl,
-    e.cache_mtime,
-    e.portage_mtime,
-    e.idate,
-    (em.ebuild IS NOT NULL) AS masked
+    (em.ebuild IS NOT NULL) AS masked,
+    e.description
    FROM (((public.ebuild e
      JOIN public.package p ON ((e.package = p.id)))
      JOIN public.category c ON ((c.id = p.category)))
@@ -1166,8 +1143,7 @@ CREATE VIEW public.view_package AS
     p.name AS package_name,
     (((c.name)::text || '/'::text) || (p.name)::text) AS cp
    FROM (public.category c
-     JOIN public.package p ON ((p.category = c.id)))
-  ORDER BY (((c.name)::text || '/'::text) || (p.name)::text);
+     JOIN public.package p ON ((p.category = c.id)));
 
 
 --
@@ -1216,22 +1192,6 @@ CREATE VIEW public.view_package_licenses AS
      JOIN public.ebuild e ON ((e.package = p.package)))
      JOIN public.ebuild_license el ON ((el.ebuild = e.id)))
      JOIN public.license l ON ((el.license = l.id)));
-
-
---
--- Name: view_package_manifest; Type: VIEW; Schema: public; Owner: -
---
-
-CREATE VIEW public.view_package_manifest AS
- SELECT c.id AS category,
-    p.id AS package,
-    c.name AS category_name,
-    p.name AS package_name,
-    (((c.name)::text || '/'::text) || (p.name)::text) AS cp,
-    p.manifest_hash
-   FROM (public.category c
-     JOIN public.package p ON ((p.category = c.id)))
-  ORDER BY (((c.name)::text || '/'::text) || (p.name)::text);
 
 
 --
@@ -1303,7 +1263,7 @@ CREATE VIEW public.view_reverse_depend AS
 SET default_with_oids = false;
 
 --
--- Name: znurt; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+-- Name: znurt; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.znurt (
@@ -1333,84 +1293,84 @@ ALTER SEQUENCE public.znurt_id_seq OWNED BY public.znurt.id;
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: arch id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.arch ALTER COLUMN id SET DEFAULT nextval('public.arch_id_seq'::regclass);
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: category id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.category ALTER COLUMN id SET DEFAULT nextval('public.category_id_seq'::regclass);
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: ebuild id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.ebuild ALTER COLUMN id SET DEFAULT nextval('public.ebuild_id_seq'::regclass);
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: eclass id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.eclass ALTER COLUMN id SET DEFAULT nextval('public.eclass_id_seq'::regclass);
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: import_status id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.import_status ALTER COLUMN id SET DEFAULT nextval('public.import_status_id_seq'::regclass);
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: license id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.license ALTER COLUMN id SET DEFAULT nextval('public.license_id_seq'::regclass);
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: package id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.package ALTER COLUMN id SET DEFAULT nextval('public.package_id_seq'::regclass);
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: package_files id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.package_files ALTER COLUMN id SET DEFAULT nextval('public.package_files_id_seq'::regclass);
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: package_use id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.package_use ALTER COLUMN id SET DEFAULT nextval('public.package_use_id_seq'::regclass);
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: use id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.use ALTER COLUMN id SET DEFAULT nextval('public.use_id_seq'::regclass);
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: znurt id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.znurt ALTER COLUMN id SET DEFAULT nextval('public.znurt_id_seq'::regclass);
 
 
 --
--- Name: category_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+-- Name: category category_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.category
@@ -1420,7 +1380,7 @@ ALTER TABLE public.category CLUSTER ON category_pkey;
 
 
 --
--- Name: ebuild_metadata_ebuild_key; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+-- Name: ebuild_metadata ebuild_metadata_ebuild_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.ebuild_metadata
@@ -1428,7 +1388,7 @@ ALTER TABLE ONLY public.ebuild_metadata
 
 
 --
--- Name: ebuild_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+-- Name: ebuild ebuild_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.ebuild
@@ -1438,7 +1398,7 @@ ALTER TABLE public.ebuild CLUSTER ON ebuild_pkey;
 
 
 --
--- Name: import_status_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+-- Name: import_status import_status_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.import_status
@@ -1446,7 +1406,7 @@ ALTER TABLE ONLY public.import_status
 
 
 --
--- Name: mtime_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+-- Name: mtime mtime_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.mtime
@@ -1454,7 +1414,7 @@ ALTER TABLE ONLY public.mtime
 
 
 --
--- Name: package_mask_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+-- Name: package_mask package_mask_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.package_mask
@@ -1462,7 +1422,7 @@ ALTER TABLE ONLY public.package_mask
 
 
 --
--- Name: package_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+-- Name: package package_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.package
@@ -1472,7 +1432,7 @@ ALTER TABLE public.package CLUSTER ON package_pkey;
 
 
 --
--- Name: package_use_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+-- Name: package_use package_use_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.package_use
@@ -1480,15 +1440,17 @@ ALTER TABLE ONLY public.package_use
 
 
 --
--- Name: pkey_arch; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+-- Name: arch pkey_arch; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.arch
     ADD CONSTRAINT pkey_arch PRIMARY KEY (id);
 
+ALTER TABLE public.arch CLUSTER ON pkey_arch;
+
 
 --
--- Name: pkey_ebuild_use; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+-- Name: ebuild_use pkey_ebuild_use; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.ebuild_use
@@ -1496,7 +1458,7 @@ ALTER TABLE ONLY public.ebuild_use
 
 
 --
--- Name: pkey_eclass; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+-- Name: eclass pkey_eclass; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.eclass
@@ -1504,7 +1466,7 @@ ALTER TABLE ONLY public.eclass
 
 
 --
--- Name: pkey_license; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+-- Name: license pkey_license; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.license
@@ -1512,7 +1474,7 @@ ALTER TABLE ONLY public.license
 
 
 --
--- Name: uniq_arch; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+-- Name: arch uniq_arch; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.arch
@@ -1520,7 +1482,7 @@ ALTER TABLE ONLY public.arch
 
 
 --
--- Name: uniq_category_name; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+-- Name: category uniq_category_name; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.category
@@ -1528,7 +1490,7 @@ ALTER TABLE ONLY public.category
 
 
 --
--- Name: uniq_ebuild_arch; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+-- Name: ebuild_arch uniq_ebuild_arch; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.ebuild_arch
@@ -1536,7 +1498,7 @@ ALTER TABLE ONLY public.ebuild_arch
 
 
 --
--- Name: uniq_ebuild_eclass; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+-- Name: ebuild_eclass uniq_ebuild_eclass; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.ebuild_eclass
@@ -1544,7 +1506,7 @@ ALTER TABLE ONLY public.ebuild_eclass
 
 
 --
--- Name: uniq_ebuild_homepage; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+-- Name: ebuild_homepage uniq_ebuild_homepage; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.ebuild_homepage
@@ -1552,7 +1514,7 @@ ALTER TABLE ONLY public.ebuild_homepage
 
 
 --
--- Name: uniq_ebuild_license; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+-- Name: ebuild_license uniq_ebuild_license; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.ebuild_license
@@ -1560,7 +1522,7 @@ ALTER TABLE ONLY public.ebuild_license
 
 
 --
--- Name: uniq_ebuild_pf; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+-- Name: ebuild uniq_ebuild_pf; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.ebuild
@@ -1568,7 +1530,7 @@ ALTER TABLE ONLY public.ebuild
 
 
 --
--- Name: uniq_eclass_name; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+-- Name: eclass uniq_eclass_name; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.eclass
@@ -1576,7 +1538,7 @@ ALTER TABLE ONLY public.eclass
 
 
 --
--- Name: uniq_license_name; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+-- Name: license uniq_license_name; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.license
@@ -1584,7 +1546,7 @@ ALTER TABLE ONLY public.license
 
 
 --
--- Name: use_name_key; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+-- Name: use use_name_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.use
@@ -1592,7 +1554,7 @@ ALTER TABLE ONLY public.use
 
 
 --
--- Name: use_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+-- Name: use use_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.use
@@ -1600,7 +1562,7 @@ ALTER TABLE ONLY public.use
 
 
 --
--- Name: znurt_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+-- Name: znurt znurt_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.znurt
@@ -1608,56 +1570,56 @@ ALTER TABLE ONLY public.znurt
 
 
 --
--- Name: idx_category_name_txt; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: idx_category_name_txt; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_category_name_txt ON public.category USING btree (name text_pattern_ops);
 
 
 --
--- Name: idx_ebuild_pf_txt; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: idx_ebuild_pf_txt; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_ebuild_pf_txt ON public.ebuild USING btree (pf text_pattern_ops);
 
 
 --
--- Name: idx_package_name; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: idx_package_name; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_package_name ON public.package USING btree (name);
 
 
 --
--- Name: idx_package_name_txt; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: idx_package_name_txt; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_package_name_txt ON public.package USING btree (name text_pattern_ops);
 
 
 --
--- Name: idx_use_name; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: idx_use_name; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_use_name ON public.use USING btree (name);
 
 
 --
--- Name: uniq_cat_name; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: uniq_cat_name; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX uniq_cat_name ON public.category USING btree (name);
 
 
 --
--- Name: uniq_package_name; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: uniq_package_name; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX uniq_package_name ON public.package USING btree (category, name);
 
 
 --
--- Name: ebuild_arch_ebuild_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: ebuild_arch ebuild_arch_ebuild_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.ebuild_arch
@@ -1665,7 +1627,7 @@ ALTER TABLE ONLY public.ebuild_arch
 
 
 --
--- Name: ebuild_depend_ebuild_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: ebuild_depend ebuild_depend_ebuild_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.ebuild_depend
@@ -1673,7 +1635,7 @@ ALTER TABLE ONLY public.ebuild_depend
 
 
 --
--- Name: ebuild_depend_package_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: ebuild_depend ebuild_depend_package_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.ebuild_depend
@@ -1681,7 +1643,7 @@ ALTER TABLE ONLY public.ebuild_depend
 
 
 --
--- Name: ebuild_eclass_ebuild_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: ebuild_eclass ebuild_eclass_ebuild_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.ebuild_eclass
@@ -1689,7 +1651,7 @@ ALTER TABLE ONLY public.ebuild_eclass
 
 
 --
--- Name: ebuild_homepage_ebuild_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: ebuild_homepage ebuild_homepage_ebuild_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.ebuild_homepage
@@ -1697,7 +1659,7 @@ ALTER TABLE ONLY public.ebuild_homepage
 
 
 --
--- Name: ebuild_license_ebuild_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: ebuild_license ebuild_license_ebuild_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.ebuild_license
@@ -1705,7 +1667,7 @@ ALTER TABLE ONLY public.ebuild_license
 
 
 --
--- Name: ebuild_mask_ebuild_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: ebuild_mask ebuild_mask_ebuild_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.ebuild_mask
@@ -1713,7 +1675,7 @@ ALTER TABLE ONLY public.ebuild_mask
 
 
 --
--- Name: ebuild_mask_package_mask_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: ebuild_mask ebuild_mask_package_mask_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.ebuild_mask
@@ -1721,7 +1683,7 @@ ALTER TABLE ONLY public.ebuild_mask
 
 
 --
--- Name: ebuild_metadata_ebuild_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: ebuild_metadata ebuild_metadata_ebuild_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.ebuild_metadata
@@ -1729,7 +1691,7 @@ ALTER TABLE ONLY public.ebuild_metadata
 
 
 --
--- Name: ebuild_package_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: ebuild ebuild_package_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.ebuild
@@ -1737,7 +1699,7 @@ ALTER TABLE ONLY public.ebuild
 
 
 --
--- Name: ebuild_use_ebuild_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: ebuild_use ebuild_use_ebuild_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.ebuild_use
@@ -1745,7 +1707,7 @@ ALTER TABLE ONLY public.ebuild_use
 
 
 --
--- Name: ebuild_version_ebuild_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: ebuild_version ebuild_version_ebuild_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.ebuild_version
@@ -1753,7 +1715,7 @@ ALTER TABLE ONLY public.ebuild_version
 
 
 --
--- Name: fkey_ebuild_arch_arch; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: ebuild_arch fkey_ebuild_arch_arch; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.ebuild_arch
@@ -1761,7 +1723,7 @@ ALTER TABLE ONLY public.ebuild_arch
 
 
 --
--- Name: fkey_ebuild_eclass_eclass; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: ebuild_eclass fkey_ebuild_eclass_eclass; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.ebuild_eclass
@@ -1769,7 +1731,7 @@ ALTER TABLE ONLY public.ebuild_eclass
 
 
 --
--- Name: fkey_ebuild_license_license; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: ebuild_license fkey_ebuild_license_license; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.ebuild_license
@@ -1777,7 +1739,7 @@ ALTER TABLE ONLY public.ebuild_license
 
 
 --
--- Name: fkey_ebuild_use_use; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: ebuild_use fkey_ebuild_use_use; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.ebuild_use
@@ -1785,7 +1747,7 @@ ALTER TABLE ONLY public.ebuild_use
 
 
 --
--- Name: fkey_package_maintainer_package; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: package_maintainer fkey_package_maintainer_package; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.package_maintainer
@@ -1793,7 +1755,7 @@ ALTER TABLE ONLY public.package_maintainer
 
 
 --
--- Name: package_category_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: package package_category_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.package
@@ -1801,7 +1763,7 @@ ALTER TABLE ONLY public.package
 
 
 --
--- Name: package_changelog_package_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: package_changelog package_changelog_package_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.package_changelog
@@ -1809,7 +1771,7 @@ ALTER TABLE ONLY public.package_changelog
 
 
 --
--- Name: package_files_package_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: package_files package_files_package_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.package_files
@@ -1817,7 +1779,7 @@ ALTER TABLE ONLY public.package_files
 
 
 --
--- Name: package_manifest_package_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: package_manifest package_manifest_package_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.package_manifest
@@ -1825,7 +1787,7 @@ ALTER TABLE ONLY public.package_manifest
 
 
 --
--- Name: package_mask_package_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: package_mask package_mask_package_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.package_mask
@@ -1833,7 +1795,7 @@ ALTER TABLE ONLY public.package_mask
 
 
 --
--- Name: package_recent_arch_arch_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: package_recent_arch package_recent_arch_arch_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.package_recent_arch
@@ -1841,7 +1803,7 @@ ALTER TABLE ONLY public.package_recent_arch
 
 
 --
--- Name: package_recent_arch_package_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: package_recent_arch package_recent_arch_package_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.package_recent_arch
@@ -1849,7 +1811,7 @@ ALTER TABLE ONLY public.package_recent_arch
 
 
 --
--- Name: package_recent_package_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: package_recent package_recent_package_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.package_recent
@@ -1857,7 +1819,7 @@ ALTER TABLE ONLY public.package_recent
 
 
 --
--- Name: package_use_package_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: package_use package_use_package_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.package_use
@@ -1865,7 +1827,7 @@ ALTER TABLE ONLY public.package_use
 
 
 --
--- Name: package_use_use_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: package_use package_use_use_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.package_use
