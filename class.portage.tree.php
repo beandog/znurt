@@ -63,21 +63,6 @@
 
 		}
 
-		public function getEclasses() {
-
-			$scandir = scandir($this->getTree().'/eclass/');
-
-			$scandir = preg_grep('/\.eclass$/', $scandir);
-			sort($scandir);
-			foreach($scandir as $filename) {
-				$filename = preg_replace("/\.eclass$/", "", $filename);
-				$arr[] = $filename;
-			}
-
-			return $arr;
-
-		}
-
 		public function getLicenses() {
 
 			$scandir = scandir($this->getTree().'/licenses/');
